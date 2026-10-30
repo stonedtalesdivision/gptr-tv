@@ -2112,3 +2112,56 @@ body {
   .media-card:hover, .channel-card:hover, .multicam-feed:hover { transform:none; box-shadow:none; }
   button, .chip, .nav-item, .top-tab-item { touch-action:manipulation; }
 }
+
+
+/* Mobile layout recovery: keep the header, navigation and drawer in one
+   predictable stacking context on narrow screens. */
+@media (max-width: 768px) {
+  html, body { min-width: 0; width: 100%; overflow-x: clip; }
+  .app-container, .main-wrapper { width: 100%; min-width: 0; }
+  .main-wrapper { margin-left: 0 !important; padding-bottom: calc(var(--player-bar-height) + env(safe-area-inset-bottom)); }
+  .sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    width: min(84vw, 300px) !important;
+    max-width: 300px;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translate3d(-105%, 0, 0);
+    z-index: 5000 !important;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 18px 0 48px rgba(0,0,0,.45);
+  }
+  .sidebar.open { transform: translate3d(0, 0, 0) !important; }
+  .brand-title, .brand-badge, .nav-item span, .nav-category, .sidebar-footer { display: initial; }
+  .brand-section { justify-content: flex-start; padding: 0 18px; flex: 0 0 var(--header-height); }
+  .nav-item { justify-content: flex-start; min-height: 46px; padding: 11px 16px; }
+  .menu-toggle { display: inline-flex !important; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; flex: 0 0 44px; }
+  .top-header { position: relative; z-index: 120; width: 100%; height: auto; min-height: 0; }
+  .header-left { display: flex; align-items: center; width: 100%; min-width: 0; }
+  .header-right { display: flex; align-items: center; width: 100%; min-width: 0; }
+  .top-nav-bar {
+    position: sticky;
+    top: 0;
+    z-index: 110;
+    width: 100%;
+    max-width: 100%;
+    min-height: 54px;
+    flex-wrap: nowrap;
+    overscroll-behavior-x: contain;
+  }
+  .content-view { width: 100%; min-width: 0; overflow: clip; }
+  .section-header > * { min-width: 0; }
+  .channel-grid, .media-grid { width: 100%; min-width: 0; }
+  .video-player-modal { box-sizing: border-box; height: 100dvh; min-height: 0; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  .video-container { flex: 1 1 auto; min-height: 0; }
+  .video-osd { z-index: 20; }
+  .channel-drawer { box-sizing: border-box; height: 100dvh; overflow-y: auto; }
+}
+@media (max-width: 380px) {
+  .header-right #btnHeaderAccessCode { max-width: 42vw; font-size: .72rem !important; }
+  .top-tab-item { padding: 8px 12px; font-size: .78rem; }
+  .channel-grid, .media-grid { gap: 8px; }
+  .channel-card { min-width: 0; }
+}
