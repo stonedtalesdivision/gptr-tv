@@ -320,9 +320,13 @@ window.openVideoPlayer = function(item, engine = null) {
       // Auto-recovery watchdog: give cold-starting satellite feeds up to 25s
       s.streamWatchdogTimer = setTimeout(() => {
         if (video.currentTime <= 0.05 && s.currentEngine === "mpegts") {
-          console.warn("[STREAM WATCHDOG] Cold start taking longer than usual, offering reconnect...");
-          window.showPlayerStatus("Connection taking longer than usual. Reconnecting...", false, true);
-          window.retryCurrentStream();
+          console.warn("[STREAM WATCHDOG] MPEG-TS did not start; trying HLS fallback.");
+          if ((window.Hls && window.Hls.isSupported()) || video.canPlayType("application/vnd.apple.mpegurl")) {
+            window.showPlayerStatus("MPEG-TS is taking too long. Switching to HLS…");
+            window.openVideoPlayer(s.currentVideoItem, "hls");
+          } else {
+            window.showPlayerStatus("Connection timed out. Check the stream or try another channel.", true, true);
+          }
         }
       }, 25000);
 
@@ -350,6 +354,8 @@ window.openVideoPlayer = function(item, engine = null) {
       window.showPlayerStatus("Player initialization error. Click Retry.", true, true);
     }
   } else if (window.Hls && window.Hls.isSupported()) {
+    // Reflect the actual fallback engine when MPEG-TS is unavailable.
+    s.currentEngine = "hls";
     if (engineBtn) engineBtn.textContent = "📡 Engine: HLS";
     window.showPlayerStatus("📡 Connecting via HLS Transmuxer... (Buffering)");
 
@@ -390,10 +396,25 @@ window.openVideoPlayer = function(item, engine = null) {
         }
       }
     });
+  } else if (video.canPlayType("application/vnd.apple.mpegurl") && (isExternalHls || streamId)) {
+    // Safari/iOS supports HLS natively even when MediaSource-based HLS.js is unavailable.
+    s.currentEngine = "native-hls";
+    if (engineBtn) engineBtn.textContent = "🍎 Native HLS";
+    video.src = isExternalHls ? streamUrl : `/stream/live/${streamId}.m3u8`;
+    video.play().catch(err => {
+      console.warn("[NATIVE HLS] Autoplay blocked:", err);
+      video.muted = true;
+      video.play().catch(console.warn);
+      window.showUnmuteBanner();
+    });
   } else {
+    s.currentEngine = "direct";
     if (engineBtn) engineBtn.textContent = "🌐 Direct";
     video.src = tsUrl;
-    video.play().catch(e => console.log(e));
+    video.play().catch(e => {
+      console.warn("[DIRECT] Playback failed:", e);
+      window.showPlayerStatus("This browser cannot play this stream format. Try switching the player engine.", true, true);
+    });
   }
 
   showOSD();
