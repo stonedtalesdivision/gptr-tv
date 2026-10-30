@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GPTR TV - Live TV, Movies, TV Series, Sports & Music</title>
+  <meta name="description" content="GPTR TV Web - Premium Streaming Experience with Live TV Channels, EPG, Movies, Series, Live Cricket & Music.">
+  <link rel="icon" type="image/png" href="img/logo.png">
+  <link rel="apple-touch-icon" href="img/logo.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css?v=14746">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-section">
+        <img class="brand-logo" src="img/logo.png" alt="GPTR TV Logo">
+        <span class="brand-title">GPTR TV</span>
+        <span class="brand-badge">PRO</span>
+      </div>
+
+      <nav class="nav-menu">
+        <span class="nav-category">Main Menu</span>
+        <a class="nav-item active" data-tab="home" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span>Home</span>
+        </a>
+        <a class="nav-item" data-tab="live" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+          <span>Live TV (<span id="sidebarChannelCountBadge">14,740</span>)</span>
+        </a>
+        <a class="nav-item" data-tab="movies" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+          <span>Movies</span>
+        </a>
+        <a class="nav-item" data-tab="series" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+          <span>TV Series</span>
+        </a>
+
+        <span class="nav-category">Live & Entertainment</span>
+        <a class="nav-item" data-tab="sports" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+          <span>Cricket & Sports</span>
+        </a>
+        <a class="nav-item" data-tab="bigboss" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          <span>Bigg Boss 24/7</span>
+        </a>
+        <a class="nav-item" data-tab="music" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          <span>Music & Lyrics</span>
+        </a>
+
+        <span class="nav-category">Preferences</span>
+        <a class="nav-item" data-tab="codes" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+          <span>Access Codes</span>
+        </a>
+        <a class="nav-item" data-tab="settings" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <span>IPTV & Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        GPTR TV Web v1.0 • Modern IPTV
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper">
+
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          </button>
+
+          <div class="search-container">
+            <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" class="search-input" id="globalSearch" placeholder="Search channels, movies, songs...">
+          </div>
+
+          <div class="cricket-ticker" id="cricketTicker" onclick="window.switchTab('sports')" title="View Live Cricket Scoreboard">
+            <div class="pulse-dot"></div>
+            <span class="ticker-text">IND vs AUS:</span>
+            <span class="ticker-score" id="cricketTickerScore">348 & 216/3 (58.2 ov)</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="btn-primary" id="btnHeaderAccessCode" onclick="window.openAccessCodeModal()" style="padding: 6px 14px; font-size: 0.82rem; background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); border: none;">
+            ✓ RAGHU4571 (VIP)
+          </button>
+          <div class="clock-display" id="clockDisplay">12:00:00</div>
+          <button class="header-btn" id="btnFullscreen" title="Toggle Fullscreen (F)">
+            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Top Quick Navigation Bar (Always visible on all screens) -->
+      <nav class="top-nav-bar">
+        <button class="top-tab-item active" data-tab="home">🏠 Home</button>
+        <button class="top-tab-item" data-tab="live" id="topTabLive">📺 Live TV (<span id="liveChannelCountBadge">14,740</span>)</button>
+        <button class="top-tab-item" data-tab="movies">🎬 Movies (VOD)</button>
+        <button class="top-tab-item" data-tab="series">📽️ TV Series</button>
+        <button class="top-tab-item" data-tab="sports">🏏 Cricket Live</button>
+        <button class="top-tab-item" data-tab="bigboss">👁️ Bigg Boss 24/7</button>
+        <button class="top-tab-item" data-tab="music">🎵 Music & Lyrics</button>
+        <button class="top-tab-item" data-tab="codes">🔑 Access Codes (<span id="codeStatusBadge" style="color:#10B981;">VIP Active</span>)</button>
+        <button class="top-tab-item" data-tab="settings">⚙️ IPTV Settings</button>
+      </nav>
+
+      <!-- ========================================== -->
+      <!-- VIEW: HOME (Dashboard) -->
+      <!-- ========================================== -->
+      <section class="content-view active" id="view-home">
+        <!-- Hero Carousel -->
+        <div class="hero-carousel">
+          <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80');">
+            <div class="hero-gradient"></div>
+            <div class="hero-content">
+              <div class="hero-badge-row">
+                <span class="badge badge-red">FEATURED PREMIERE</span>
+                <span class="badge badge-translucent">4K ULTRA HD</span>
+              </div>
+              <h1 class="hero-title">Cyber Odyssey: Beyond the Horizon</h1>
+              <div class="hero-meta">
+                <span>★ 4.9 Rating</span>
+                <span>2026</span>
+                <span>2h 35m</span>
+                <span>Sci-Fi / Action</span>
+              </div>
+              <p class="hero-synopsis">In a neon-drenched metropolis on the brink of an AI revolution, a rogue neural pilot uncovers a planetary conspiracy encoded within deep space quantum signals.</p>
+              <div class="hero-actions">
+                <button class="btn-primary btn-hero-play" data-id="feat-1">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Watch Now
+                </button>
+                <button class="btn-secondary" onclick="alert('Added to your personal Watchlist!')">
+                  + Add to Watchlist
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1600&auto=format&fit=crop&q=80');">
+            <div class="hero-gradient"></div>
+            <div class="hero-content">
+              <div class="hero-badge-row">
+                <span class="badge badge-red">🔴 LIVE CRICKET</span>
+                <span class="badge badge-translucent">BORDER-GAVASKAR TROPHY</span>
+              </div>
+              <h1 class="hero-title">IND vs AUS: 3rd Test Live</h1>
+              <div class="hero-meta">
+                <span>Session 2 Live</span>
+                <span>India lead by 280 runs</span>
+                <span>MCG</span>
+              </div>
+              <p class="hero-synopsis">Witness high-intensity cricket as Virat Kohli and KL Rahul build India's commanding lead in Melbourne. Stream with multi-angle commentary.</p>
+              <div class="hero-actions">
+                <button class="btn-primary btn-hero-play" data-id="feat-2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Watch Live Stream
+                </button>
+                <button class="btn-secondary" onclick="window.switchTab('sports')">
+                  View Full Scorecard
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&auto=format&fit=crop&q=80');">
+            <div class="hero-gradient"></div>
+            <div class="hero-content">
+              <div class="hero-badge-row">
+                <span class="badge badge-red">🔴 24X7 LIVE</span>
+                <span class="badge badge-translucent">REALITY TV</span>
+              </div>
+              <h1 class="hero-title">Bigg Boss Season 19 Live House</h1>
+              <div class="hero-meta">
+                <span>142K Viewers</span>
+                <span>4 Multicam Feeds</span>
+                <span>Uncut & Live</span>
+              </div>
+              <p class="hero-synopsis">Step inside the Bigg Boss house with uninterrupted 24-hour live camera access. Switch between living room, garden, confession room, and kitchen.</p>
+              <div class="hero-actions">
+                <button class="btn-primary btn-hero-play" data-id="feat-3">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Watch Live House
+                </button>
+                <button class="btn-secondary" onclick="window.switchTab('bigboss')">
+                  Switch Cameras
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+
+        <!-- 1. Live TV Channels Row -->
+        <div class="section-header">
+          <h2 class="section-title"><span></span> Trending Live TV Channels</h2>
+          <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="window.switchTab('live')">View All 14,740+ Channels ▶</button>
+        </div>
+        <div class="channel-grid" id="homeChannelPreview">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- 2. Movies Row -->
+        <div class="section-header" style="margin-top: 36px;">
+          <h2 class="section-title"><span></span> Blockbuster Movies (VOD)</h2>
+          <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="window.switchTab('movies')">Explore Full Movies Catalogue ▶</button>
+        </div>
+        <div class="media-grid" id="homeMoviePreview">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- 3. TV Series Row -->
+        <div class="section-header" style="margin-top: 36px;">
+          <h2 class="section-title"><span></span> Popular TV Series & Shows</h2>
+          <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="window.switchTab('series')">View All Series & Seasons ▶</button>
+        </div>
+        <div class="media-grid" id="homeSeriesPreview">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: LIVE TV -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-live">
+        <div id="liveBannerContainer"></div>
+        <div class="section-header">
+          <h2 class="section-title"><span></span> Live Television Catalogue</h2>
+          <div style="font-size: 0.9rem; color: var(--text-muted);" id="liveChannelTotalDisplay">14,740 Channels Available</div>
+        </div>
+        <div class="category-controls-row">
+          <select class="category-select-dropdown" id="liveCategoryDropdown" onchange="window.selectCategoryDropdown(this.value)">
+            <option value="All">All Categories (Loading...)</option>
+          </select>
+          <input type="text" id="categoryFilterInput" class="category-search-box" placeholder="🔍 Search Categories (e.g. Sports, Telugu, Hindi, News, UK, USA...)" oninput="window.filterCategoryChips(this.value)">
+        </div>
+        <div class="category-chips" id="liveCategoryChips">
+          <!-- All 157 Categories Dynamically Rendered -->
+        </div>
+        <div class="channel-grid" id="channelGrid">
+          <!-- Channel Cards -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: MOVIES (VOD) -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-movies">
+        <div class="section-header">
+          <h2 class="section-title"><span></span> Movies Catalogue (VOD)</h2>
+          <div style="font-size: 0.9rem; color: var(--text-muted);" id="movieTotalDisplay">Movies Available</div>
+        </div>
+        <div class="category-controls-row">
+          <select class="category-select-dropdown" id="movieCategoryDropdown" onchange="window.selectMovieCategory(this.value)">
+            <option value="All">All Movie Categories</option>
+          </select>
+          <input type="text" id="movieCategoryFilterInput" class="category-search-box" placeholder="🔍 Search Movie Categories (e.g. Hindi, English, 4K, Marvel...)" oninput="window.filterMovieCategoryChips(this.value)">
+        </div>
+        <div class="category-chips" id="movieCategoryChips">
+          <!-- Movie Categories -->
+        </div>
+        <div class="media-grid" id="movieGrid">
+          <!-- Movie Cards -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: TV SERIES -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-series">
+        <div class="section-header">
+          <h2 class="section-title"><span></span> TV Series Catalogue</h2>
+          <div style="font-size: 0.9rem; color: var(--text-muted);" id="seriesTotalDisplay">TV Series Available</div>
+        </div>
+        <div class="category-controls-row">
+          <select class="category-select-dropdown" id="seriesCategoryDropdown" onchange="window.selectSeriesCategory(this.value)">
+            <option value="All">All Series Categories</option>
+          </select>
+          <input type="text" id="seriesCategoryFilterInput" class="category-search-box" placeholder="🔍 Search Series Categories (e.g. Netflix, Prime, HBO, Cricket...)" oninput="window.filterSeriesCategoryChips(this.value)">
+        </div>
+        <div class="category-chips" id="seriesCategoryChips">
+          <!-- Series Categories -->
+        </div>
+        <div class="media-grid" id="seriesGrid">
+          <!-- Series Cards -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: CRICKET & SPORTS -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-sports">
+        <div class="section-header">
+          <h2 class="section-title"><span></span> Live Cricket & Sports Center</h2>
+        </div>
+        <div id="cricketCardContainer">
+          <!-- Cricket Scoreboard -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: BIGG BOSS 24/7 -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-bigboss">
+        <div class="section-header">
+          <h2 class="section-title"><span></span> Bigg Boss 24/7 Multicam</h2>
+        </div>
+        <div class="multicam-grid" id="multicamGrid">
+          <!-- Multicam Feeds -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: MUSIC & LYRICS -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-music">
+        <div class="section-header">
+          <h2 class="section-title"><span></span> Music Stream & Synced Lyrics</h2>
+        </div>
+        <div class="music-container">
+          <div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 14px; font-weight: 700;">Trending Indian & Global Tracks</h3>
+            <div class="song-list" id="songList">
+              <!-- Song list -->
+            </div>
+          </div>
+          <div class="lyrics-panel">
+            <div class="lyrics-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--brand-red)"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+              <span>Synchronized Lyrics</span>
+            </div>
+            <div class="lyrics-scroll" id="lyricsScroll">
+              <!-- Lyrics lines -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: ACCESS CODES & ACTIVATION -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-codes">
+        <div class="section-header">
+          <h2 class="section-title"><span></span> Access Code Activation</h2>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+          <div class="cricket-card-wrap">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">🔑 Unlock With Access Code</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+              Enter the access code provided by your service provider or distributor to unlock premium playlists, live channels, and movies.
+            </p>
+
+            <div class="form-group">
+              <label class="form-label" for="accessCodeInput">Access / Activation Code</label>
+              <input type="text" class="form-input" id="accessCodeInput" placeholder="e.g. GPTR-XXXX, VIP-XXXX, or IPTV Code" style="text-transform: uppercase; font-family: monospace; font-size: 1.05rem; letter-spacing: 1px;">
+            </div>
+
+            <button class="btn-primary" id="btnActivateCode" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); border: none; margin-bottom: 14px;">
+              ⚡ Activate Access Code
+            </button>
+
+            <div id="codeStatusMsg" style="font-size: 0.88rem; min-height: 24px; font-weight: 600;"></div>
+          </div>
+
+          <div class="cricket-card-wrap">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">📋 Activated Codes</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+              Manage your active playlists and provider subscriptions.
+            </p>
+
+            <div id="activatedCodesList">
+              <!-- Populated by JS -->
+            </div>
+
+            <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+              <span style="font-size: 0.85rem; color: #F59E0B; font-weight: 700; display: block; margin-bottom: 8px;">⚡ Official Server Access Code:</span>
+              <button class="btn-primary" style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 800; padding: 10px 18px; border: none; font-size: 0.92rem; letter-spacing: 0.5px; width: 100%; justify-content: center; box-shadow: 0 0 14px rgba(245,158,11,0.4);" onclick="document.getElementById('accessCodeInput').value='RAGHU4571'; document.getElementById('btnActivateCode').click()">
+                ⚡ UNLOCK 14,740+ CHANNELS ("RAGHU4571")
+              </button>
+              <div style="margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+                * Validates against server backend and connects to STAR-NETWORK (livebox.pro). Random codes will be rejected.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- VIEW: SETTINGS & PLAYLISTS -->
+      <!-- ========================================== -->
+      <section class="content-view" id="view-settings">
+        <div class="section-header">
+          <h2 class="section-title"><span></span> IPTV Configuration & Preferences</h2>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+          <!-- M3U Playlist Section -->
+          <div class="cricket-card-wrap">
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 14px;">📡 Add M3U Playlist</h3>
+            <div class="form-group">
+              <label class="form-label" for="m3uUrlInput">Playlist URL (.m3u / .m3u8)</label>
+              <input type="url" class="form-input" id="m3uUrlInput" placeholder="https://example.com/playlist.m3u">
+            </div>
+            <button class="btn-primary" id="btnLoadM3U" style="width: 100%; justify-content: center; margin-bottom: 16px;">
+              Load Online Playlist
+            </button>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+              <label class="form-label" for="m3uFileInput">Or Upload Local .M3U File</label>
+              <input type="file" id="m3uFileInput" accept=".m3u,.m3u8,.txt" class="form-input" style="padding: 6px;">
+            </div>
+          </div>
+
+          <!-- Xtream Codes Section -->
+          <div class="cricket-card-wrap">
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 14px;">⚡ Xtream Codes API</h3>
+            <div class="form-group">
+              <label class="form-label" for="xtreamServer">Server URL</label>
+              <input type="url" class="form-input" id="xtreamServer" placeholder="http://iptv.server:8080">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="xtreamUser">Username</label>
+              <input type="text" class="form-input" id="xtreamUser" placeholder="Username">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="xtreamPass">Password</label>
+              <input type="password" class="form-input" id="xtreamPass" placeholder="Password">
+            </div>
+            <button class="btn-primary" id="btnConnectXtream" style="width: 100%; justify-content: center;">
+              Connect Xtream Codes
+            </button>
+          </div>
+
+          <!-- Stalker Portal & Preferences -->
+          <div class="cricket-card-wrap">
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 14px;">🎨 Appearance & Storage</h3>
+            <div class="form-group">
+              <label class="form-label" for="themeSelect">Color Theme</label>
+              <select class="form-input" id="themeSelect">
+                <option value="default">GPTR Red & Obsidian (Default)</option>
+                <option value="oled">Pure OLED Pitch Black</option>
+                <option value="midnight">Midnight Electric Blue</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Active Playlist Status</label>
+              <div id="playlistStatus" style="font-size: 0.88rem; color: #38BDF8; min-height: 24px;">Preloaded GPTR TV Channels active.</div>
+            </div>
+
+            <button class="btn-secondary" id="btnClearCache" style="width: 100%; justify-content: center; margin-top: 14px; border-color: rgba(229,9,20,0.4); color: #EF4444;">
+              Reset to Factory Defaults
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Docked Music Player Bar -->
+    <div class="music-player-bar" id="musicBar">
+      <div class="music-bar-left">
+        <img class="music-bar-thumb" id="musicThumb" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100" alt="Album Art">
+        <div style="overflow: hidden;">
+          <div class="song-title" id="musicTitle" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Arabic Kuthu</div>
+          <div class="song-artist" id="musicArtist" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Anirudh Ravichander</div>
+        </div>
+      </div>
+
+      <div class="music-bar-center">
+        <div class="player-controls">
+          <button class="player-ctrl-btn" id="musicPrevBtn" aria-label="Previous Track">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+          <button class="play-pause-btn" id="musicPlayBtn" aria-label="Play or Pause">
+            ▶
+          </button>
+          <button class="player-ctrl-btn" id="musicNextBtn" aria-label="Next Track">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+        </div>
+        <div class="progress-container">
+          <span class="time-stamp" id="musicTimeCurrent">0:00</span>
+          <input type="range" class="time-slider" id="musicProgress" value="0" min="0" max="100">
+          <span class="time-stamp" id="musicTimeTotal">4:39</span>
+        </div>
+      </div>
+
+      <div class="music-bar-right">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--text-secondary)"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.8" style="width: 80px;">
+        <button class="header-btn" style="width: 32px; height: 32px;" onclick="window.switchTab('music')" title="View Synced Lyrics">
+          <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- FULLSCREEN VIDEO PLAYER MODAL -->
+  <!-- ========================================== -->
+  <div class="video-player-modal" id="videoPlayerModal">
+    <div class="video-container">
+      <video id="mainVideoPlayer" autoplay playsinline></video>
+      <button class="unmute-banner-btn" id="unmuteBannerBtn" onclick="window.unmuteVideo()" style="display: none;">
+        🔊 Tap to Unmute Audio
+      </button>
+
+      <!-- Player Status Overlay / Spinner -->
+      <div class="player-status-overlay" id="playerStatusOverlay">
+        <div class="player-spinner"></div>
+        <div class="player-status-msg" id="playerStatusMsg">Connecting to live stream...</div>
+        <div class="player-status-actions" id="playerStatusActions" style="display: none;">
+          <button class="btn-primary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="window.retryCurrentStream()">🔄 Retry</button>
+          <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="window.togglePlayerEngine()">⚡ Switch Engine</button>
+          <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.82rem;" onclick="window.playNextChannel()">⏭ Next Channel</button>
+        </div>
+      </div>
+
+      <!-- Custom Video OSD Overlay -->
+      <div class="video-osd">
+        <!-- OSD Top -->
+        <div class="osd-top">
+          <div class="osd-channel-meta">
+            <img class="osd-channel-logo" id="osdChannelLogo" src="img/logo.png" alt="Channel Logo">
+            <div>
+              <div class="osd-channel-title" id="osdChannelTitle">GPTR Cinema HD</div>
+              <div class="osd-channel-epg" id="osdChannelEpg">Live Broadcast</div>
+            </div>
+          </div>
+          <button class="osd-close-btn" id="osdCloseBtn" onclick="window.closeVideoPlayer()" title="Close Player (Esc)">
+            ✕
+          </button>
+        </div>
+
+        <!-- OSD Bottom -->
+        <div class="osd-bottom">
+          <div class="osd-progress-wrap">
+            <span class="time-stamp" id="osdTimeDisplay">LIVE</span>
+            <input type="range" class="osd-slider" id="osdProgressBar" min="0" max="100" value="0">
+          </div>
+
+          <div class="osd-controls-row">
+            <div class="osd-btn-group">
+              <button class="osd-btn" id="osdPlayBtn">▶ Play</button>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFF"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                <input type="range" id="osdVolumeSlider" min="0" max="1" step="0.05" value="1" style="width: 80px;">
+              </div>
+            </div>
+
+            <div class="osd-btn-group">
+              <button class="osd-btn" id="osdEngineBtn" onclick="window.togglePlayerEngine()" title="Switch Streaming Engine (MPEG-TS / HLS)">⚡ Engine: TS</button>
+              <button class="osd-btn" id="toggleDrawerBtn">📺 Channels</button>
+              <button class="osd-btn" id="osdAspectBtn">Ratio: FIT</button>
+              <button class="osd-btn" id="osdPipBtn" title="Picture in Picture">PiP</button>
+              <button class="osd-btn" id="osdFullscreenBtn" title="Fullscreen (F)">⛶ Fullscreen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TV Remote Channel Switcher Drawer -->
+      <div class="channel-drawer" id="channelDrawer">
+        <div class="drawer-header">
+          <h3 style="font-weight: 800; font-size: 1.15rem;">Quick Channel List</h3>
+          <button class="modal-close" id="closeDrawerBtn">✕</button>
+        </div>
+        <div class="drawer-list" id="drawerList">
+          <!-- Drawer items -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MOVIE / SERIES DETAILS MODAL -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-box detail-modal-box">
+      <div class="detail-hero" id="detailHero">
+        <button class="osd-close-btn" id="closeDetailBtn" onclick="window.closeDetailModal()" style="position: absolute; top: 16px; right: 16px;">✕</button>
+        <div style="position: relative; z-index: 2;">
+          <h2 style="font-size: 1.8rem; font-weight: 800;" id="detailTitle">Title</h2>
+          <div style="font-size: 0.9rem; color: #E2E8F0; margin-top: 4px;" id="detailMeta">2026 • 2h 10m</div>
+        </div>
+      </div>
+      <div class="detail-content">
+        <div style="display: flex; gap: 14px;">
+          <button class="btn-primary" id="detailPlayBtn" style="padding: 12px 28px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Play Stream
+          </button>
+        </div>
+        <p style="color: #D1D5DB; line-height: 1.6;" id="detailSynopsis">Synopsis...</p>
+        <div style="font-size: 0.85rem; color: var(--text-muted);" id="detailCast">Cast</div>
+        <div id="detailEpisodes" style="display: none;">
+          <!-- Series episodes list -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- ACCESS CODE MODAL -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="accessCodeModal">
+    <div class="modal-box" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔑 Enter Service Provider Code</h3>
+        <button class="modal-close" onclick="window.closeAccessCodeModal()">✕</button>
+      </div>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 18px;">
+        Enter the access code provided by your IPTV distributor or service provider to unlock your content.
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="modalAccessCodeInput">Access Code</label>
+        <input type="text" class="form-input" id="modalAccessCodeInput" placeholder="e.g. GPTR-XXXX, VIP-XXXX, or IPTV Code" style="text-transform: uppercase; font-family: monospace; font-size: 1.1rem; letter-spacing: 1.5px;">
+      </div>
+      <button class="btn-primary" id="btnModalActivateCode" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); border: none; margin-bottom: 12px;">
+        ⚡ Activate & Unlock
+      </button>
+      <div id="modalCodeStatusMsg" style="font-size: 0.88rem; min-height: 24px; font-weight: 600;"></div>
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+        <span style="font-size: 0.82rem; color: var(--text-muted);">Quick-fill Legitimate Server Code:</span>
+        <button class="chip" style="margin-left: 8px; color: #F59E0B; border-color: #F59E0B; font-weight: 800; background: rgba(245,158,11,0.15);" onclick="document.getElementById('modalAccessCodeInput').value='RAGHU4571'; document.getElementById('btnModalActivateCode').click()">
+          ⚡ RAGHU4571
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Scripts with Cache Buster -->
+  <script src="mpegts.js?v=14746"></script>
+  <script src="hls.min.js"></script>
+  <script src="unlocked_channels.js?v=14746"></script>
+  <script src="unlocked_vod.js?v=14746"></script>
+  <script src="channels_data.js?v=14746"></script>
+  <script src="app.js?v=14746"></script>
+</body>
+</html>

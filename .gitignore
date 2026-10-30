@@ -1,0 +1,35 @@
+# Android Decompiled APK Artifacts
+assets/
+kotlin/
+lib/
+okhttp3/
+org/
+res/
+META-INF/
+resources.arsc
+AndroidManifest.xml
+DebugProbesKt.bin
+kotlin-tooling-metadata.json
+*.dex
+*.apk
+*.proto
+*.properties
+/hls.min.js
+/logo.png
+
+# Temporary scratch scripts (server.py is the application server)
+check_*.py
+find_*.py
+inspect_*.py
+patch_*.py
+replace_*.py
+test_*.py
+update_*.py
+verify_*.py
+
+# Python & Dev Artifacts
+*.pyc
+__pycache__/
+.vscode/
+.idea/
+scratch/
