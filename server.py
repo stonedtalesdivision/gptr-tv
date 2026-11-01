@@ -400,6 +400,11 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
     def get_xtream_creds(self):
         return get_configured_xtream_creds()
 
+    def send_upstream_error(self, operation, error):
+        # Upstream exception text can contain credential-bearing request URLs.
+        print(f"[UPSTREAM ERROR] {operation}: {type(error).__name__}")
+        self.send_error(502, f"Upstream service is temporarily unavailable while {operation}.")
+
     def handle_account_info(self):
         server, user, pwd = self.get_xtream_creds()
         url = xtream_api_url(server, user, pwd)
@@ -410,7 +415,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(data).encode('utf-8'))
         except Exception as e:
-            self.send_error(500, str(e))
+            self.send_upstream_error("fetching account information", e)
 
     def handle_live_categories(self):
         if CACHE['live_categories'] is None:
@@ -437,7 +442,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                         data = json.load(f)
                     CACHE['live_categories'] = data
                 else:
-                    self.send_error(500, f"Error fetching live categories: {e}")
+                    self.send_upstream_error("fetching live categories", e)
                     return
 
         self.send_response(200)
@@ -472,7 +477,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                         data = json.load(f)
                     CACHE['live_streams'] = data
                 else:
-                    self.send_error(500, f"Error fetching live streams: {e}")
+                    self.send_upstream_error("fetching live streams", e)
                     return
 
         if cat_id:
@@ -503,7 +508,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 data = fetch_json(url, timeout=10)
                 CACHE['vod_categories'] = data
             except Exception as e:
-                self.send_error(500, f"Error fetching VOD categories: {e}")
+                self.send_upstream_error("fetching VOD categories", e)
                 return
 
         self.send_response(200)
@@ -525,7 +530,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 data = fetch_json(url, timeout=12)
                 CACHE['vod_streams_by_cat'][cat_id] = data
             except Exception as e:
-                self.send_error(500, f"Error fetching VOD streams: {e}")
+                self.send_upstream_error("fetching VOD streams", e)
                 return
 
         self.send_response(200)
@@ -551,7 +556,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 data = fetch_json(url, timeout=10)
                 CACHE['series_categories'] = data
             except Exception as e:
-                self.send_error(500, f"Error fetching Series categories: {e}")
+                self.send_upstream_error("fetching series categories", e)
                 return
 
         self.send_response(200)
@@ -572,7 +577,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 data = fetch_json(url, timeout=12)
                 CACHE['series_by_cat'][cat_id] = data
             except Exception as e:
-                self.send_error(500, f"Error fetching Series: {e}")
+                self.send_upstream_error("fetching series", e)
                 return
 
         self.send_response(200)
@@ -593,7 +598,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(data).encode('utf-8'))
         except Exception as e:
-            self.send_error(500, f"Error fetching Series Info: {e}")
+            self.send_upstream_error("fetching series information", e)
 
     def handle_sports_channels(self, code):
         url = f'https://gptrtvapi.duckdns.org/api/iptv/sports/channels?code={code}'
