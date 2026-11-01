@@ -1846,16 +1846,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCricketSection();
   renderAccessCodes();
 
-  // Access Code Button Listeners
-  document.getElementById("btnActivateCode")?.addEventListener("click", () => {
-    const val = document.getElementById("accessCodeInput")?.value;
-    window.activateAccessCode(val, "codeStatusMsg");
-  });
-
-  document.getElementById("btnModalActivateCode")?.addEventListener("click", () => {
-    const val = document.getElementById("modalAccessCodeInput")?.value;
-    window.activateAccessCode(val, "modalCodeStatusMsg");
-  });
+  // Access-code buttons invoke validation directly from their HTML onclick handlers.
 });
 
 window.openAccessCodeModal = function() {
