@@ -14,9 +14,8 @@ PORT = int(os.environ.get('PORT', 5145))
 SITE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'site'))
 
 # SSL context for duckdns if needed
+# Use the platform trust store and verify both the certificate chain and hostname.
 ssl_ctx = ssl.create_default_context()
-ssl_ctx.check_hostname = False
-ssl_ctx.verify_mode = ssl.CERT_NONE
 
 import threading
 import subprocess
