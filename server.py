@@ -5,6 +5,9 @@ import socketserver
 import urllib.request
 import urllib.error
 import urllib.parse
+import hmac
+import hashlib
+import http.cookies
 import json
 import os
 import mimetypes
@@ -23,6 +26,10 @@ import subprocess
 import tempfile
 import shutil
 import time
+
+AUTH_COOKIE_NAME = 'gptrtv_session'
+AUTH_SIGNING_KEY = os.urandom(32)
+AUTH_SESSION_MAX_AGE = 43200
 
 HLS_SESSIONS = {}
 HLS_LOCK = threading.Lock()
@@ -195,6 +202,43 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
             pass
 
+    def _auth_token(self, code):
+        signature = hmac.new(AUTH_SIGNING_KEY, code.encode('utf-8'), hashlib.sha256).hexdigest()
+        return f"{code}.{signature}"
+
+    def _set_auth_cookie(self, code):
+        self.send_header(
+            'Set-Cookie',
+            f"{AUTH_COOKIE_NAME}={self._auth_token(code)}; Path=/; Max-Age={AUTH_SESSION_MAX_AGE}; HttpOnly; Secure; SameSite=Lax"
+        )
+
+    def _is_authenticated(self):
+        cookies = http.cookies.SimpleCookie()
+        try:
+            cookies.load(self.headers.get('Cookie', ''))
+            morsel = cookies.get(AUTH_COOKIE_NAME)
+            if morsel is None:
+                return False
+            code, separator, supplied_signature = morsel.value.partition('.')
+            if not separator or code not in CACHE['codes']:
+                return False
+            expected_signature = hmac.new(
+                AUTH_SIGNING_KEY, code.encode('utf-8'), hashlib.sha256
+            ).hexdigest()
+            return hmac.compare_digest(supplied_signature, expected_signature)
+        except (ValueError, TypeError):
+            return False
+
+    def _require_authentication(self):
+        if self._is_authenticated():
+            return True
+        self.send_response(401)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Cache-Control', 'no-store')
+        self.end_headers()
+        self.wfile.write(json.dumps({'error': 'Authentication required. Please validate your access code again.'}).encode('utf-8'))
+        return False
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.end_headers()
@@ -225,6 +269,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             res = CACHE['codes'][code]
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self._set_auth_cookie(code)
             self.end_headers()
             self.wfile.write(json.dumps(res).encode('utf-8'))
             return
@@ -249,6 +294,8 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                     CACHE['codes'][code] = parsed
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
+                if parsed.get('success'):
+                    self._set_auth_cookie(code)
                 self.end_headers()
                 self.wfile.write(resp_data)
                 print("[AUTH SUCCESS] Access code validated")
@@ -281,6 +328,10 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps({'error': 'An unexpected validation error occurred.'}).encode('utf-8'))
 
     def do_GET(self):
+        # Protect catalog APIs and media proxy routes with the validated session cookie.
+        if self.path.startswith('/api/') or self.path.startswith('/stream/'):
+            if not self._require_authentication():
+                return
         # Route API requests
         if self.path.startswith('/api/'):
             self.handle_api()
