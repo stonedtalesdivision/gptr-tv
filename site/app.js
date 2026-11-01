@@ -836,7 +836,10 @@ function renderLiveChannels(filterCategory = "All", searchQuery = "") {
   if (!grid) return;
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; color: var(--text-muted);"><h3>No Channels found in this category</h3><p>Try selecting another category or searching for a specific channel name.</p></div>`;
+    const message = searchQuery.trim()
+      ? `No channels match "${escapeHtml(searchQuery.trim())}" in this category.`
+      : "No channels are currently assigned to this category.";
+    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; color: var(--text-muted);"><h3>${message}</h3><p>Clear the search or choose another category to see more channels.</p></div>`;
     return;
   }
 
@@ -920,7 +923,13 @@ window.loadMoreChannels = function() {
 window.selectCategoryDropdown = function(cat) {
   const s = window.GPTR_APP.state;
   s.liveCurrentPage = 1;
-  renderLiveChannels(cat, document.getElementById("globalSearch")?.value || "");
+
+  // A previous global search can remain active while the user changes tabs.
+  // Clear it so selecting a category shows that category's full channel list.
+  const globalSearch = document.getElementById("globalSearch");
+  if (globalSearch) globalSearch.value = "";
+
+  renderLiveChannels(cat, "");
 };
 
 window.renderMovieCategoryChipsList = function(categories, activeCat, queryFilter = "") {
