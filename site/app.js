@@ -590,19 +590,32 @@ window.openDetailModal = function(item, type) {
         const s1 = item.seasons?.[0];
         if (s1 && s1.episodes && s1.episodes.length > 0) {
           epContainer.innerHTML = `
-            <h4 style="margin-bottom: 12px; font-weight: 700;">Season ${s1.seasonNumber || 1} Episodes (${s1.episodes.length})</h4>
+            <h4 style="margin-bottom: 12px; font-weight: 700;">Season ${escapeHtml(s1.seasonNumber || 1)} Episodes (${s1.episodes.length})</h4>
             <div class="episodes-list">
-              ${s1.episodes.map(ep => `
-                <div class="episode-item" onclick="closeDetailModal(); window.openVideoPlayer({title:'${escapeQuotes(item.title)} E${ep.episodeNumber}: ${escapeQuotes(ep.title)}', epg:'TV Episode', logo:'${item.poster || ''}', streamUrl:'${ep.streamUrl}'})">
+              ${s1.episodes.map((ep, index) => `
+                <button type="button" class="episode-item" data-episode-index="${index}" style="width:100%;text-align:left;">
                   <div>
-                    <strong>E${ep.episodeNumber}. ${ep.title}</strong>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${ep.duration || '45m'} ${ep.overview ? '• ' + ep.overview : ''}</div>
+                    <strong>E${escapeHtml(ep.episodeNumber)}. ${escapeHtml(ep.title)}</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${escapeHtml(ep.duration || '45m')} ${ep.overview ? '• ' + escapeHtml(ep.overview) : ''}</div>
                   </div>
-                  <button class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">▶ Play</button>
-                </div>
+                  <span class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">▶ Play</span>
+                </button>
               `).join("")}
             </div>
           `;
+          epContainer.querySelectorAll("[data-episode-index]").forEach(button => {
+            button.addEventListener("click", () => {
+              const episode = s1.episodes[Number(button.dataset.episodeIndex)];
+              if (!episode) return;
+              closeDetailModal();
+              window.openVideoPlayer({
+                title: `${item.title} E${episode.episodeNumber}: ${episode.title}`,
+                epg: "TV Episode",
+                logo: safeMediaImageUrl(item.poster),
+                streamUrl: episode.streamUrl
+              });
+            });
+          });
           if (playBtn) {
             const ep1 = s1.episodes[0];
             playBtn.onclick = () => {
