@@ -1701,16 +1701,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const q = e.target.value.trim().toLowerCase();
     if (s.currentTab === "live") renderLiveChannels(s.activeCategory, q);
     else if (s.currentTab === "movies") {
-      let filtered = s.movies.filter(m => m.title.toLowerCase().includes(q) || m.genre.toLowerCase().includes(q));
+      let filtered = s.movies.filter(m =>
+        String(m.title || "").toLowerCase().includes(q) ||
+        String(m.genre || "").toLowerCase().includes(q)
+      );
       const grid = document.getElementById("movieGrid");
-      if (grid) {
-        grid.innerHTML = filtered.map(m => `
-          <div class="media-card" onclick="window.openDetailModal(window.GPTR_APP.state.movies.find(x => x.id === '${m.id}'), 'movie')">
-            <div class="media-poster-wrap"><img class="media-poster" src="${m.poster}" alt="${m.title}"><div class="media-rating">★ ${m.rating}</div></div>
-            <div class="media-info"><h4 class="media-title">${m.title}</h4><div class="media-sub"><span>${m.year}</span><span>${m.genre}</span></div></div>
-          </div>
-        `).join("");
-      }
+      if (grid) renderMediaCards(grid, filtered, "movie");
     }
   });
 
