@@ -1898,18 +1898,26 @@ window.closeAccessCodeModal = function() {
 window.loadUnlockedCatalog = async function(session, code, allowAuthRefresh = true) {
   const s = window.GPTR_APP.state;
   s.isLoadingCatalog = true;
-
-  console.log("[CATALOG] Fetching 14,740+ channels and VOD from server...");
+  s.channels = [];
+  s.movies = [];
+  s.series = [];
+  s.vodCategories = [];
+  s.seriesCategories = [];
+  s.loadedMovieCategories = new Set();
+  s.loadedSeriesCategories = new Set();
   renderLiveBanner();
 
+  const fetchJson = async (path) => {
+    const response = await fetch(path, { credentials: "same-origin" });
+    if (!response.ok) throw new Error(`Catalogue request failed (${response.status}).`);
+    return response.json();
+  };
+
   try {
-    // 1. Fetch categories
-    const catMap = {};
+    let liveCategories;
     try {
-      const catRes = await fetch("/api/catalog/live-categories");
-      if (catRes.status === 401 && allowAuthRefresh && code) {
-        // A process restart invalidates the in-memory signing key. Revalidate the
-        // saved code once to issue a fresh session cookie, then retry the catalog.
+      const response = await fetch("/api/catalog/live-categories", { credentials: "same-origin" });
+      if (response.status === 401 && allowAuthRefresh && code) {
         const authRes = await fetch("/api/iptv/validate-code", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1932,108 +1940,79 @@ window.loadUnlockedCatalog = async function(session, code, allowAuthRefresh = tr
         localStorage.removeItem("gptrtv_session");
         throw new Error("Your session expired. Please enter your access code again.");
       }
-      if (catRes.ok) {
-        const cats = await catRes.json();
-        s.liveCategories = cats;
-        cats.forEach(c => { catMap[c.category_id] = c.category_name; });
-      }
-    } catch (e) {
-      if (e.message === "Your session expired. Please enter your access code again.") throw e;
-      console.warn("Failed to fetch live categories:", e);
+      if (!response.ok) throw new Error(`Live categories unavailable (${response.status}).`);
+      liveCategories = await response.json();
+      if (!Array.isArray(liveCategories)) throw new Error("Invalid live category response.");
+      s.liveCategories = liveCategories;
+    } catch (error) {
+      if (error.message === "Your session expired. Please enter your access code again.") throw error;
+      console.warn("[CATALOG] Live categories unavailable:", error);
+      liveCategories = [];
     }
 
-    // 2. Fetch live streams (14,740 channels!)
+    const liveCategoryNames = new Map(
+      liveCategories.map(category => [String(category.category_id), category.category_name])
+    );
+
     try {
-      const streamRes = await fetch("/api/catalog/live-streams");
-      if (streamRes.ok) {
-        const streams = await streamRes.json();
-        console.log(`[CATALOG] Successfully received ${streams.length} channels from server!`);
-
-        s.channels = streams.map(item => ({
-          id: "xtream_" + item.stream_id,
-          stream_id: item.stream_id,
-          num: item.num,
-          name: item.name,
-          category: catMap[item.category_id] || "General Live",
-          categoryId: item.category_id,
-          logo: (item.stream_icon && item.stream_icon.startsWith("http")) ? item.stream_icon : "img/logo.png",
-          streamUrl: `/stream/live/${item.stream_id}.m3u8`,
-          directUrl: `/stream/live/${item.stream_id}.m3u8`,
-          quality: item.name.includes("4K") ? "4K" : (item.name.includes("FHD") ? "FHD" : "HD"),
-          epg: {
-            now: { title: item.name + " Live Broadcast", progress: 50 }
-          }
-        }));
-        s.unlockedChannelsCount = s.channels.length;
-      }
-    } catch (e) {
-      console.warn("Failed to fetch live streams:", e);
+      const streams = await fetchJson("/api/catalog/live-streams");
+      if (!Array.isArray(streams)) throw new Error("Invalid live stream response.");
+      s.channels = streams.filter(item => item && item.stream_id != null).map(item => ({
+        id: "xtream_" + item.stream_id,
+        stream_id: item.stream_id,
+        num: item.num,
+        name: item.name || "Unnamed channel",
+        category: liveCategoryNames.get(String(item.category_id)) || "Uncategorised",
+        categoryId: item.category_id,
+        logo: safeMediaImageUrl(item.stream_icon),
+        streamUrl: `/stream/live/${encodeURIComponent(item.stream_id)}.m3u8`,
+        directUrl: `/stream/live/${encodeURIComponent(item.stream_id)}.m3u8`,
+        quality: /4K/i.test(item.name || "") ? "4K" : (/FHD/i.test(item.name || "") ? "FHD" : "HD"),
+        epg: null
+      }));
+      s.unlockedChannelsCount = s.channels.length;
+    } catch (error) {
+      console.warn("[CATALOG] Live streams unavailable:", error);
     }
 
-    // 3. Fetch VOD categories and top movies
     try {
-      const vodCatRes = await fetch("/api/catalog/vod-categories");
-      if (vodCatRes.ok) {
-        const vodCats = await vodCatRes.json();
-        const vodMap = {};
-        vodCats.forEach(c => { vodMap[c.category_id] = c.category_name; });
-
-        const vodRes = await fetch("/api/catalog/vod-streams?category_id=122");
-        if (vodRes.ok) {
-          const vodStreams = await vodRes.json();
-          s.movies = vodStreams.slice(0, 100).map(m => ({
-            id: "vod_" + m.stream_id,
-            stream_id: m.stream_id,
-            title: m.name,
-            genre: vodMap[m.category_id] || "Action",
-            categoryId: m.category_id,
-            year: (m.name.match(/\((\d{4})\)/) || [])[1] || "2024",
-            rating: m.rating || "8.5",
-            poster: (m.stream_icon && m.stream_icon.startsWith("http")) ? m.stream_icon : "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500",
-            backdrop: (m.stream_icon && m.stream_icon.startsWith("http")) ? m.stream_icon : "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200",
-            streamUrl: `/stream/movie/${m.stream_id}.${m.container_extension || "mp4"}`,
-            description: `${m.name} - Ultra High Definition streaming.`,
-            quality: m.name.includes("4K") ? "4K" : "1080p",
-            duration: "135m"
-          }));
-        }
-      }
-    } catch (e) {
-      console.warn("VOD load error:", e);
+      const [vodCategories, seriesCategories] = await Promise.all([
+        fetchJson("/api/catalog/vod-categories"),
+        fetchJson("/api/catalog/series-categories")
+      ]);
+      s.vodCategories = Array.isArray(vodCategories) ? vodCategories : [];
+      s.seriesCategories = Array.isArray(seriesCategories) ? seriesCategories : [];
+    } catch (error) {
+      console.warn("[CATALOG] VOD/series categories unavailable:", error);
     }
 
-    // 4. Fetch Series
-    try {
-      const serRes = await fetch("/api/catalog/series?category_id=518");
-      if (serRes.ok) {
-        const serStreams = await serRes.json();
-        s.series = serStreams.map(ser => ({
-          id: "ser_" + ser.series_id,
-          series_id: ser.series_id,
-          title: ser.name,
-          genre: "Highlights & Sports",
-          rating: ser.rating || "8.0",
-          poster: (ser.cover && ser.cover.startsWith("http")) ? ser.cover : "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500",
-          backdrop: (ser.cover && ser.cover.startsWith("http")) ? ser.cover : "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200",
-          seasonsCount: 1,
-          description: ser.plot || `${ser.name} - Complete highlights series.`,
-          episodes: []
-        }));
-      }
-    } catch (e) {
-      console.warn("Series load error:", e);
-    }
+    updateDOMBadges();
+    renderLiveChannels("All");
+    renderMovies();
+    renderSeries();
+    renderHomeView();
 
-  } catch (err) {
-    console.error("Catalog load error:", err);
+    // Load one real category from each catalogue to make the first screen useful.
+    const firstMovieCategory = s.vodCategories.find(category => category?.category_id != null);
+    const firstSeriesCategory = s.seriesCategories.find(category => category?.category_id != null);
+    await Promise.all([
+      firstMovieCategory ? window.selectMovieCategory(firstMovieCategory.category_name) : Promise.resolve(),
+      firstSeriesCategory ? window.selectSeriesCategory(firstSeriesCategory.category_name) : Promise.resolve()
+    ]);
+  } catch (error) {
+    console.error("[CATALOG] Load failed:", error);
+    if (error.message === "Your session expired. Please enter your access code again.") {
+      const status = document.getElementById("codeStatusMsg");
+      if (status) status.textContent = error.message;
+    }
   } finally {
     s.isLoadingCatalog = false;
     updateDOMBadges();
     renderLiveBanner();
     renderLiveChannels(s.activeCategory || "All");
     renderHomeView();
-    renderMovies();
-    renderSeries();
+    renderMovies(s.activeMovieGenre || "All");
+    renderSeries(s.activeSeriesGenre || "All");
     renderAccessCodes();
   }
 };
