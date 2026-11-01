@@ -419,7 +419,7 @@ window.openVideoPlayer = function(item, engine = null) {
       console.error("MPEGTS Init exception:", e);
       window.showPlayerStatus("Player initialization error. Click Retry.", true, true);
     }
-  } else if (window.Hls && window.Hls.isSupported()) {
+  } else if (window.Hls && window.Hls.isSupported() && !(video.canPlayType("application/vnd.apple.mpegurl") && /iPhone|iPad|iPod/i.test(navigator.userAgent))) {
     // Reflect the actual fallback engine when MPEG-TS is unavailable.
     s.currentEngine = "hls";
     if (engineBtn) engineBtn.textContent = "📡 Engine: HLS";
@@ -481,6 +481,17 @@ window.openVideoPlayer = function(item, engine = null) {
       console.warn("[DIRECT] Playback failed:", e);
       window.showPlayerStatus("This browser cannot play this stream format. Try switching the player engine.", true, true);
     });
+  }
+
+  // A single startup watchdog covers HLS.js and native HLS. Never leave
+  // the user staring at an endless spinner when no media data arrives.
+  if (s.currentEngine === "hls" || s.currentEngine === "native-hls") {
+    s.streamWatchdogTimer = setTimeout(() => {
+      if (s.currentVideoItem && video.readyState < 2 && video.currentTime <= 0.05) {
+        console.warn("[STREAM WATCHDOG] HLS produced no playable media data.");
+        window.showPlayerStatus("This channel has not delivered playable video. Retry or switch channel.", true, true);
+      }
+    }, 30000);
   }
 
   showOSD();
