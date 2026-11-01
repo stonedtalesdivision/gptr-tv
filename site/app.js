@@ -1993,6 +1993,9 @@ window.loadUnlockedCatalog = async function(session, code, allowAuthRefresh = tr
     renderHomeView();
     renderMovies(s.activeMovieGenre || "All");
     renderSeries(s.activeSeriesGenre || "All");
+    renderCricketSection();
+    renderBiggBoss();
+    renderMusicSection();
     renderAccessCodes();
   }
 };
@@ -2108,6 +2111,8 @@ window.removeAccessCode = function(code) {
     renderHomeView();
     renderMovies("All");
     renderSeries("All");
+    renderCricketSection();
+    renderBiggBoss();
     renderMusicSection();
   }
   renderAccessCodes();
