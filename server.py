@@ -81,14 +81,8 @@ threading.Thread(target=cleanup_hls_sessions, daemon=True).start()
 
 # In-memory cache for credentials and channels
 CACHE = {
-    'codes': {
-        'RAGHU4571': {
-            "success": True,
-            "name": "gandreti raghu",
-            "playlistType": "xtream",
-            "channelSettings": None,
-        }
-    },
+    # Only populate this cache after the remote validation service confirms a code.
+    'codes': {},
     'live_categories': None,
     'live_streams': None,
     'vod_categories': None,
