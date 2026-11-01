@@ -569,21 +569,32 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404, "Stream not found")
 
     def handle_hls_stream(self, stream_id, filename):
+        ffmpeg_path = shutil.which('ffmpeg')
+        if not ffmpeg_path:
+            print("[HLS ERROR] FFmpeg executable is not installed or not on PATH")
+            self.send_error(503, "HLS playback is unavailable: FFmpeg is not installed on the server")
+            return
+
         server, user, pwd = self.get_xtream_creds()
         with HLS_LOCK:
             sess = HLS_SESSIONS.get(stream_id)
             if not sess or sess['proc'].poll() is not None:
                 temp_dir = os.path.join(tempfile.gettempdir(), f"gptr_hls_{stream_id}")
                 os.makedirs(temp_dir, exist_ok=True)
-                for f in os.listdir(temp_dir):
+                for name in os.listdir(temp_dir):
+                    path = os.path.join(temp_dir, name)
                     try:
-                        os.remove(os.path.join(temp_dir, f))
-                    except Exception:
+                        if os.path.isfile(path) or os.path.islink(path):
+                            os.remove(path)
+                        elif os.path.isdir(path):
+                            shutil.rmtree(path, ignore_errors=True)
+                    except OSError:
                         pass
+
                 upstream_url = f'{server}/live/{user}/{pwd}/{stream_id}.ts'
                 playlist_path = os.path.join(temp_dir, 'index.m3u8')
                 cmd = [
-                    'ffmpeg', '-y', '-hide_banner', '-loglevel', 'warning',
+                    ffmpeg_path, '-y', '-hide_banner', '-loglevel', 'error',
                     '-user_agent', USER_AGENT,
                     '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5',
                     '-i', upstream_url,
@@ -595,7 +606,15 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                     '-hls_flags', 'delete_segments+split_by_time',
                     playlist_path
                 ]
-                proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                try:
+                    proc = subprocess.Popen(
+                        cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    )
+                except OSError as exc:
+                    print(f"[HLS ERROR] Could not start FFmpeg: {type(exc).__name__}")
+                    self.send_error(503, "HLS playback could not start. Check the FFmpeg installation.")
+                    return
+
                 sess = {'proc': proc, 'dir': temp_dir, 'last_access': time.time()}
                 HLS_SESSIONS[stream_id] = sess
                 print(f"[HLS] Started FFmpeg session for stream {stream_id}")
@@ -607,9 +626,16 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             for _ in range(140):
                 if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
                     break
+                if sess['proc'].poll() is not None:
+                    print(f"[HLS ERROR] FFmpeg exited with code {sess['proc'].returncode}")
+                    with HLS_LOCK:
+                        HLS_SESSIONS.pop(stream_id, None)
+                    self.send_error(502, "FFmpeg stopped before producing an HLS playlist. Check the upstream stream and server logs.")
+                    return
                 time.sleep(0.25)
-            if not os.path.exists(filepath):
-                self.send_error(504, "HLS generation timeout")
+
+            if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+                self.send_error(504, "Timed out waiting for FFmpeg to generate the HLS playlist")
                 return
             try:
                 with open(filepath, 'rb') as f:
@@ -621,38 +647,34 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(content)
                 return
-            except Exception as e:
-                self.send_error(500, f"Error reading playlist: {e}")
+            except OSError:
+                self.send_error(500, "Unable to read the generated HLS playlist")
                 return
         else:
             if not os.path.exists(filepath):
                 for _ in range(8):
                     if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
                         break
+                    if sess['proc'].poll() is not None:
+                        self.send_error(502, "FFmpeg stopped while generating an HLS segment")
+                        return
                     time.sleep(0.25)
-            if not os.path.exists(filepath):
-                def seg_num(name):
-                    m = re.findall(r'\d+', name)
-                    return int(m[0]) if m else 0
-                ts_files = sorted([f for f in os.listdir(sess['dir']) if f.endswith('.ts')], key=seg_num)
-                if ts_files:
-                    filepath = os.path.join(sess['dir'], ts_files[0])
-                else:
-                    self.send_error(404, "Segment not found")
-                    return
+            if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+                self.send_error(404, "HLS segment is not available yet")
+                return
             try:
                 with open(filepath, 'rb') as f:
                     content = f.read()
                 self.send_response(200)
                 self.send_header('Content-Type', 'video/mp2t')
-                self.send_header('Cache-Control', 'public, max-age=3600')
+                self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.send_header('Content-Length', str(len(content)))
                 self.end_headers()
                 self.wfile.write(content)
                 return
-            except Exception as e:
-                self.send_error(500, f"Error reading segment: {e}")
+            except OSError:
+                self.send_error(500, "Unable to read the generated HLS segment")
                 return
 
     def proxy_live_stream(self, target_url):
