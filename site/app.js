@@ -697,6 +697,9 @@ function renderHomeView() {
 
   // 1. Home Live Channels Row (First 8 channels)
   const homeCh = document.getElementById("homeChannelPreview");
+  if (homeCh && s.channels.length === 0) {
+    homeCh.innerHTML = '<p class="empty-state">Connect your provider to load live channels.</p>';
+  }
   if (homeCh && s.channels.length > 0) {
     const previewChannels = s.channels.slice(0, 8);
     homeCh.innerHTML = previewChannels.map((ch, index) => {
@@ -762,12 +765,16 @@ function renderHomeView() {
   const homeMov = document.getElementById("homeMoviePreview");
   if (homeMov && s.movies.length > 0) {
     renderMediaCards(homeMov, s.movies.slice(0, 6), "movie");
+  } else if (homeMov) {
+    homeMov.innerHTML = '<p class="empty-state">Movies appear here when your provider catalogue is connected.</p>';
   }
 
-  // 3. Home Series Row (All series)
+  // 3. Home Series Row (All loaded series)
   const homeSer = document.getElementById("homeSeriesPreview");
   if (homeSer && s.series.length > 0) {
     renderMediaCards(homeSer, s.series, "series");
+  } else if (homeSer) {
+    homeSer.innerHTML = '<p class="empty-state">Series appear here when your provider catalogue is connected.</p>';
   }
 }
 
@@ -1899,12 +1906,20 @@ window.loadUnlockedCatalog = async function(session, code, allowAuthRefresh = tr
     }
 
     try {
-      const [vodCategories, seriesCategories] = await Promise.all([
+      const [vodResult, seriesResult] = await Promise.allSettled([
         fetchJson("/api/catalog/vod-categories"),
         fetchJson("/api/catalog/series-categories")
       ]);
-      s.vodCategories = Array.isArray(vodCategories) ? vodCategories : [];
-      s.seriesCategories = Array.isArray(seriesCategories) ? seriesCategories : [];
+      if (vodResult.status === "fulfilled" && Array.isArray(vodResult.value)) {
+        s.vodCategories = vodResult.value;
+      } else if (vodResult.status === "rejected") {
+        console.warn("[CATALOG] Movie categories unavailable:", vodResult.reason);
+      }
+      if (seriesResult.status === "fulfilled" && Array.isArray(seriesResult.value)) {
+        s.seriesCategories = seriesResult.value;
+      } else if (seriesResult.status === "rejected") {
+        console.warn("[CATALOG] Series categories unavailable:", seriesResult.reason);
+      }
     } catch (error) {
       console.warn("[CATALOG] VOD/series categories unavailable:", error);
     }
