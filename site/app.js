@@ -71,10 +71,7 @@ window.switchTab = function(tabId) {
     view.classList.toggle("active", view.id === `view-${tabId}`);
   });
 
-  // Mobile sidebar close
-  document.querySelector(".sidebar")?.classList.remove("open");
-  document.body.classList.remove("mobile-menu-open");
-  document.getElementById("menuToggle")?.setAttribute("aria-expanded", "false");
+  setMobileSidebarOpen(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   if (tabId === "live") renderLiveChannels();
@@ -1398,27 +1395,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Mobile Menu: toggle drawer and dismiss it on outside tap / Escape.
+  // Mobile Menu: one state setter keeps the drawer, backdrop and scroll lock in sync.
   const mobileSidebar = document.querySelector(".sidebar");
   const mobileMenuToggle = document.getElementById("menuToggle");
+  window.setMobileSidebarOpen = function(isOpen) {
+    if (!mobileSidebar || !mobileMenuToggle) return;
+    const open = Boolean(isOpen);
+    mobileSidebar.classList.toggle("open", open);
+    document.body.classList.toggle("mobile-menu-open", open);
+    mobileMenuToggle.setAttribute("aria-expanded", String(open));
+  };
   mobileMenuToggle?.addEventListener("click", (event) => {
     event.stopPropagation();
-    const isOpen = mobileSidebar?.classList.toggle("open");
-    document.body.classList.toggle("mobile-menu-open", Boolean(isOpen));
-    mobileMenuToggle.setAttribute("aria-expanded", String(Boolean(isOpen)));
+    window.setMobileSidebarOpen(!mobileSidebar?.classList.contains("open"));
   });
+  // The CSS backdrop intercepts outside taps, preventing accidental activation
+  // of controls underneath while the drawer is open.
   document.addEventListener("click", (event) => {
     if (!mobileSidebar?.classList.contains("open")) return;
     if (mobileSidebar.contains(event.target) || mobileMenuToggle?.contains(event.target)) return;
-    mobileSidebar.classList.remove("open");
-    document.body.classList.remove("mobile-menu-open");
-    mobileMenuToggle?.setAttribute("aria-expanded", "false");
+    window.setMobileSidebarOpen(false);
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape" || !mobileSidebar?.classList.contains("open")) return;
-    mobileSidebar.classList.remove("open");
-    document.body.classList.remove("mobile-menu-open");
-    mobileMenuToggle?.setAttribute("aria-expanded", "false");
+    window.setMobileSidebarOpen(false);
+    mobileMenuToggle?.focus();
   });
 
   // Hero Dots
