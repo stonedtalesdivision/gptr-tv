@@ -85,11 +85,7 @@
             <input type="text" class="search-input" id="globalSearch" placeholder="Search channels, movies, songs...">
           </div>
 
-          <div class="cricket-ticker" id="cricketTicker" onclick="window.switchTab('sports')" title="View Live Cricket Scoreboard">
-            <div class="pulse-dot"></div>
-            <span class="ticker-text">IND vs AUS:</span>
-            <span class="ticker-score" id="cricketTickerScore">348 & 216/3 (58.2 ov)</span>
-          </div>
+
         </div>
 
         <div class="header-right">
@@ -122,89 +118,17 @@
       <section class="content-view active" id="view-home">
         <!-- Hero Carousel -->
         <div class="hero-carousel">
-          <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80');">
+          <div class="hero-slide active">
             <div class="hero-gradient"></div>
             <div class="hero-content">
-              <div class="hero-badge-row">
-                <span class="badge badge-red">FEATURED PREMIERE</span>
-                <span class="badge badge-translucent">4K ULTRA HD</span>
-              </div>
-              <h1 class="hero-title">Cyber Odyssey: Beyond the Horizon</h1>
-              <div class="hero-meta">
-                <span>★ 4.9 Rating</span>
-                <span>2026</span>
-                <span>2h 35m</span>
-                <span>Sci-Fi / Action</span>
-              </div>
-              <p class="hero-synopsis">In a neon-drenched metropolis on the brink of an AI revolution, a rogue neural pilot uncovers a planetary conspiracy encoded within deep space quantum signals.</p>
+              <div class="hero-badge-row"><span class="badge badge-translucent">GPTR TV</span></div>
+              <h1 class="hero-title">Your entertainment, in one place.</h1>
+              <div class="hero-meta"><span>Live TV</span><span>Movies</span><span>Series</span></div>
+              <p class="hero-synopsis">Sign in with your access code to load available content from the connected catalogue.</p>
               <div class="hero-actions">
-                <button class="btn-primary btn-hero-play" data-id="feat-1">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  Watch Now
-                </button>
-                <button class="btn-secondary" onclick="alert('Added to your personal Watchlist!')">
-                  + Add to Watchlist
-                </button>
+                <button class="btn-primary btn-hero-play" onclick="window.openAccessCodeModal()">Enter Access Code</button>
               </div>
             </div>
-          </div>
-
-          <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1600&auto=format&fit=crop&q=80');">
-            <div class="hero-gradient"></div>
-            <div class="hero-content">
-              <div class="hero-badge-row">
-                <span class="badge badge-red">🔴 LIVE CRICKET</span>
-                <span class="badge badge-translucent">BORDER-GAVASKAR TROPHY</span>
-              </div>
-              <h1 class="hero-title">IND vs AUS: 3rd Test Live</h1>
-              <div class="hero-meta">
-                <span>Session 2 Live</span>
-                <span>India lead by 280 runs</span>
-                <span>MCG</span>
-              </div>
-              <p class="hero-synopsis">Witness high-intensity cricket as Virat Kohli and KL Rahul build India's commanding lead in Melbourne. Stream with multi-angle commentary.</p>
-              <div class="hero-actions">
-                <button class="btn-primary btn-hero-play" data-id="feat-2">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  Watch Live Stream
-                </button>
-                <button class="btn-secondary" onclick="window.switchTab('sports')">
-                  View Full Scorecard
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&auto=format&fit=crop&q=80');">
-            <div class="hero-gradient"></div>
-            <div class="hero-content">
-              <div class="hero-badge-row">
-                <span class="badge badge-red">🔴 24X7 LIVE</span>
-                <span class="badge badge-translucent">REALITY TV</span>
-              </div>
-              <h1 class="hero-title">Bigg Boss Season 19 Live House</h1>
-              <div class="hero-meta">
-                <span>142K Viewers</span>
-                <span>4 Multicam Feeds</span>
-                <span>Uncut & Live</span>
-              </div>
-              <p class="hero-synopsis">Step inside the Bigg Boss house with uninterrupted 24-hour live camera access. Switch between living room, garden, confession room, and kitchen.</p>
-              <div class="hero-actions">
-                <button class="btn-primary btn-hero-play" data-id="feat-3">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  Watch Live House
-                </button>
-                <button class="btn-secondary" onclick="window.switchTab('bigboss')">
-                  Switch Cameras
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="hero-dots">
-            <div class="dot active"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
           </div>
         </div>
 
