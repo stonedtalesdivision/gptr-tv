@@ -4,6 +4,7 @@ import http.server
 import socketserver
 import urllib.request
 import urllib.error
+import urllib.parse
 import json
 import os
 import mimetypes
@@ -62,9 +63,6 @@ CACHE = {
             "name": "gandreti raghu",
             "playlistType": "xtream",
             "channelSettings": None,
-            "xtreamServer": "http://livebox.pro",
-            "xtreamUsername": "5403259",
-            "xtreamPassword": "precious6mark"
         }
     },
     'live_categories': None,
@@ -82,6 +80,22 @@ def fetch_json(url, timeout=12):
     req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode('utf-8', errors='ignore'))
+
+def get_configured_xtream_creds():
+    """Read upstream Xtream credentials from the deployment environment."""
+    server = os.environ.get('GPTR_XTREAM_SERVER', '').strip().rstrip('/')
+    username = os.environ.get('GPTR_XTREAM_USERNAME', '').strip()
+    password = os.environ.get('GPTR_XTREAM_PASSWORD', '').strip()
+    if not all((server, username, password)):
+        raise RuntimeError("Xtream upstream configuration is incomplete; set GPTR_XTREAM_SERVER, GPTR_XTREAM_USERNAME and GPTR_XTREAM_PASSWORD.")
+    return server, username, password
+
+
+def xtream_api_url(server, username, password, **params):
+    query = {'username': username, 'password': password}
+    query.update(params)
+    return f"{server}/player_api.php?{urllib.parse.urlencode(query)}"
+
 
 def precache_catalog():
     # 1. Load local categories immediately from disk
@@ -126,7 +140,8 @@ def precache_catalog():
     # 3. Only fetch from network if disk cache was missing
     if not CACHE['live_categories']:
         try:
-            url_cat = 'http://livebox.pro/player_api.php?username=5403259&password=precious6mark&action=get_live_categories'
+            server, user, pwd = get_configured_xtream_creds()
+            url_cat = xtream_api_url(server, user, pwd, action='get_live_categories')
             CACHE['live_categories'] = fetch_json(url_cat, timeout=12)
             print(f"[PRE-CACHE] Network cached {len(CACHE['live_categories'])} live categories.")
         except Exception as e:
@@ -134,7 +149,8 @@ def precache_catalog():
 
     if not CACHE['live_streams']:
         try:
-            url_streams = 'http://livebox.pro/player_api.php?username=5403259&password=precious6mark&action=get_live_streams'
+            server, user, pwd = get_configured_xtream_creds()
+            url_streams = xtream_api_url(server, user, pwd, action='get_live_streams')
             CACHE['live_streams'] = fetch_json(url_streams, timeout=30)
             print(f"[PRE-CACHE] Network cached {len(CACHE['live_streams'])} channels successfully!")
         except Exception as e:
@@ -299,12 +315,11 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404, "API route not found")
 
     def get_xtream_creds(self):
-        # Default or active credentials
-        return 'http://livebox.pro', '5403259', 'precious6mark'
+        return get_configured_xtream_creds()
 
     def handle_account_info(self):
         server, user, pwd = self.get_xtream_creds()
-        url = f'{server}/player_api.php?username={user}&password={pwd}'
+        url = xtream_api_url(server, user, pwd)
         try:
             data = fetch_json(url, timeout=6)
             self.send_response(200)
@@ -328,7 +343,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             data = CACHE['live_categories']
         else:
             server, user, pwd = self.get_xtream_creds()
-            url = f'{server}/player_api.php?username={user}&password={pwd}&action=get_live_categories'
+            url = xtream_api_url(server, user, pwd, action='get_live_categories')
             try:
                 data = fetch_json(url, timeout=10)
                 CACHE['live_categories'] = data
@@ -361,7 +376,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             data = CACHE['live_streams']
         else:
             server, user, pwd = self.get_xtream_creds()
-            url = f'{server}/player_api.php?username={user}&password={pwd}&action=get_live_streams'
+            url = xtream_api_url(server, user, pwd, action='get_live_streams')
             try:
                 print("[CATALOG] Fetching full 14,740 live streams from Livebox...")
                 data = fetch_json(url, timeout=25)
@@ -400,7 +415,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             data = CACHE['vod_categories']
         else:
             server, user, pwd = self.get_xtream_creds()
-            url = f'{server}/player_api.php?username={user}&password={pwd}&action=get_vod_categories'
+            url = xtream_api_url(server, user, pwd, action='get_vod_categories')
             try:
                 data = fetch_json(url, timeout=10)
                 CACHE['vod_categories'] = data
@@ -422,7 +437,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         if cat_id in CACHE['vod_streams_by_cat']:
             data = CACHE['vod_streams_by_cat'][cat_id]
         else:
-            url = f'{server}/player_api.php?username={user}&password={pwd}&action=get_vod_streams&category_id={cat_id}'
+            url = xtream_api_url(server, user, pwd, action='get_vod_streams', category_id=cat_id)
             try:
                 data = fetch_json(url, timeout=12)
                 CACHE['vod_streams_by_cat'][cat_id] = data
@@ -448,7 +463,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             data = CACHE['series_categories']
         else:
             server, user, pwd = self.get_xtream_creds()
-            url = f'{server}/player_api.php?username={user}&password={pwd}&action=get_series_categories'
+            url = xtream_api_url(server, user, pwd, action='get_series_categories')
             try:
                 data = fetch_json(url, timeout=10)
                 CACHE['series_categories'] = data
@@ -469,7 +484,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         if cat_id in CACHE['series_by_cat']:
             data = CACHE['series_by_cat'][cat_id]
         else:
-            url = f'{server}/player_api.php?username={user}&password={pwd}&action=get_series&category_id={cat_id}'
+            url = xtream_api_url(server, user, pwd, action='get_series', category_id=cat_id)
             try:
                 data = fetch_json(url, timeout=12)
                 CACHE['series_by_cat'][cat_id] = data
@@ -487,7 +502,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(400, "Missing series_id")
             return
         server, user, pwd = self.get_xtream_creds()
-        url = f'{server}/player_api.php?username={user}&password={pwd}&action=get_series_info&series_id={series_id}'
+        url = xtream_api_url(server, user, pwd, action='get_series_info', series_id=series_id)
         try:
             data = fetch_json(url, timeout=12)
             self.send_response(200)
