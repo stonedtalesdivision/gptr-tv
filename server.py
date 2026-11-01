@@ -547,7 +547,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             start = max(0, int(offset or 0))
         except (TypeError, ValueError):
             self.send_error(400, "Invalid catalogue pagination parameters.")
-            return []
+            return None
         return data[start:start + page_size]
 
     def handle_vod_streams(self, cat_id=None, limit=None, offset='0'):
@@ -572,6 +572,8 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
         data = self._paginate_catalog(data, limit, offset)
+        if data is None:
+            return
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
