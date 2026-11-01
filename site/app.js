@@ -64,6 +64,56 @@ function escapeHtml(value) {
   })[char]);
 }
 
+function safeMediaImageUrl(value, fallback = "img/logo.png") {
+  const url = String(value ?? "").trim();
+  if (!url) return fallback;
+  if (/^(https?:\/\/|\/|\.\/|\.\.\/|data:image\/(?:png|jpeg|gif|webp);base64,)/i.test(url)) return url;
+  return fallback;
+}
+
+function renderMediaCards(container, items, type) {
+  if (!container) return;
+  const isSeries = type === "series";
+  container.innerHTML = items.map((item, index) => {
+    const title = escapeHtml(item.title);
+    const poster = escapeHtml(safeMediaImageUrl(item.poster));
+    const rating = escapeHtml(item.rating ?? "N/A");
+    const subtitle = isSeries
+      ? `${escapeHtml(item.seasonsCount || 1)} Seasons`
+      : escapeHtml(item.year ?? "");
+    const genre = escapeHtml(item.genre ?? "");
+    return `
+      <div class="media-card" data-media-index="${index}" tabindex="0" role="button" aria-label="Open ${title}">
+        <div class="media-poster-wrap">
+          <img class="media-poster" src="${poster}" alt="${title}" loading="lazy" onerror="this.onerror=null;this.src='img/logo.png'">
+          <div class="media-rating">★ ${rating}</div>
+          <div class="media-overlay">
+            <div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+          </div>
+        </div>
+        <div class="media-info">
+          <h4 class="media-title">${title}</h4>
+          <div class="media-sub"><span>${subtitle}</span><span>${genre}</span></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.querySelectorAll("[data-media-index]").forEach(card => {
+    const openDetails = () => {
+      const item = items[Number(card.dataset.mediaIndex)];
+      if (item) window.openDetailModal(item, type);
+    };
+    card.addEventListener("click", openDetails);
+    card.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDetails();
+      }
+    });
+  });
+}
+
 // Top-level Global Helper Handlers
 window.switchTab = function(tabId) {
   const s = window.GPTR_APP.state;
@@ -656,41 +706,13 @@ function renderHomeView() {
   // 2. Home Movies Row (First 6 movies)
   const homeMov = document.getElementById("homeMoviePreview");
   if (homeMov && s.movies.length > 0) {
-    homeMov.innerHTML = s.movies.slice(0, 6).map(m => `
-      <div class="media-card" onclick="window.openDetailModal(window.GPTR_APP.state.movies.find(x => x.id === '${m.id}'), 'movie')" tabindex="0">
-        <div class="media-poster-wrap">
-          <img class="media-poster" src="${m.poster}" alt="${m.title}" loading="lazy">
-          <div class="media-rating">★ ${m.rating}</div>
-          <div class="media-overlay">
-            <div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-          </div>
-        </div>
-        <div class="media-info">
-          <h4 class="media-title">${m.title}</h4>
-          <div class="media-sub"><span>${m.year}</span><span>${m.genre}</span></div>
-        </div>
-      </div>
-    `).join("");
+    renderMediaCards(homeMov, s.movies.slice(0, 6), "movie");
   }
 
   // 3. Home Series Row (All series)
   const homeSer = document.getElementById("homeSeriesPreview");
   if (homeSer && s.series.length > 0) {
-    homeSer.innerHTML = s.series.map(ser => `
-      <div class="media-card" onclick="window.openDetailModal(window.GPTR_APP.state.series.find(x => x.id === '${ser.id}'), 'series')" tabindex="0">
-        <div class="media-poster-wrap">
-          <img class="media-poster" src="${ser.poster}" alt="${ser.title}" loading="lazy">
-          <div class="media-rating">★ ${ser.rating}</div>
-          <div class="media-overlay">
-            <div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-          </div>
-        </div>
-        <div class="media-info">
-          <h4 class="media-title">${ser.title}</h4>
-          <div class="media-sub"><span>${ser.seasonsCount} Seasons</span><span>${ser.genre}</span></div>
-        </div>
-      </div>
-    `).join("");
+    renderMediaCards(homeSer, s.series, "series");
   }
 }
 
@@ -978,21 +1000,7 @@ function renderMovies(filterGenre = "All") {
     return;
   }
 
-  grid.innerHTML = filtered.map(m => `
-    <div class="media-card" onclick="window.openDetailModal(window.GPTR_APP.state.movies.find(x => x.id === '${m.id}'), 'movie')" tabindex="0">
-      <div class="media-poster-wrap">
-        <img class="media-poster" src="${m.poster}" alt="${escapeQuotes(m.title)}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500'">
-        <div class="media-rating">★ ${m.rating}</div>
-        <div class="media-overlay">
-          <div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-        </div>
-      </div>
-      <div class="media-info">
-        <h4 class="media-title">${m.title}</h4>
-        <div class="media-sub"><span>${m.year}</span><span>${m.genre}</span></div>
-      </div>
-    </div>
-  `).join("");
+  renderMediaCards(grid, filtered, "movie");
 }
 
 window.selectMovieCategory = async function(cat) {
@@ -1133,21 +1141,7 @@ function renderSeries(filterGenre = "All") {
     return;
   }
 
-  grid.innerHTML = filtered.map(ser => `
-    <div class="media-card" onclick="window.openDetailModal(window.GPTR_APP.state.series.find(x => x.id === '${ser.id}'), 'series')" tabindex="0">
-      <div class="media-poster-wrap">
-        <img class="media-poster" src="${ser.poster}" alt="${escapeQuotes(ser.title)}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500'">
-        <div class="media-rating">★ ${ser.rating}</div>
-        <div class="media-overlay">
-          <div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-        </div>
-      </div>
-      <div class="media-info">
-        <h4 class="media-title">${ser.title}</h4>
-        <div class="media-sub"><span>${ser.seasonsCount || 1} Seasons</span><span>${ser.genre}</span></div>
-      </div>
-    </div>
-  `).join("");
+  renderMediaCards(grid, filtered, "series");
 }
 
 window.selectSeriesCategory = async function(cat) {
