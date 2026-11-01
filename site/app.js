@@ -58,6 +58,12 @@ function escapeQuotes(str) {
   return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
+
 // Top-level Global Helper Handlers
 window.switchTab = function(tabId) {
   const s = window.GPTR_APP.state;
@@ -815,33 +821,60 @@ function renderLiveChannels(filterCategory = "All", searchQuery = "") {
   const pageLimit = (s.liveCurrentPage || 1) * (s.livePageSize || 60);
   const paged = filtered.slice(0, pageLimit);
 
-  grid.innerHTML = paged.map(ch => {
+  grid.innerHTML = paged.map((ch, index) => {
     const isFav = s.favorites.includes(ch.id);
     const nowTitle = ch.epg?.now?.title || "Live Stream";
-    const progress = ch.epg?.now?.progress || 50;
+    const progress = Math.max(0, Math.min(100, Number(ch.epg?.now?.progress ?? 50) || 0));
 
     return `
-      <div class="channel-card" onclick="window.openVideoPlayer({title:'${escapeQuotes(ch.name)}', epg:'${escapeQuotes(nowTitle)}', logo:'${ch.logo}', streamUrl:'${ch.streamUrl}', directUrl:'${ch.directUrl || ''}', channelId:'${ch.id}', stream_id:'${ch.stream_id || ''}'})" tabindex="0">
+      <div class="channel-card" data-channel-index="${index}" tabindex="0" role="button">
         <div class="channel-card-top">
           <div class="channel-logo-wrap">
-            <img class="channel-logo" src="${ch.logo}" alt="${escapeQuotes(ch.name)}" loading="lazy" onerror="this.src='img/logo.png'">
+            <img class="channel-logo" src="${escapeHtml(ch.logo || 'img/logo.png')}" alt="${escapeHtml(ch.name)}" loading="lazy" onerror="this.onerror=null;this.src='img/logo.png'">
           </div>
           <div class="channel-badges">
             <span class="badge badge-red">LIVE</span>
-            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); window.toggleFavorite('${ch.id}')">★</button>
+            <button class="fav-btn ${isFav ? 'active' : ''}" data-favorite-index="${index}" aria-label="Toggle favorite">★</button>
           </div>
         </div>
         <div class="channel-info">
-          <h3 class="channel-name" title="${escapeQuotes(ch.name)}">${ch.name}</h3>
-          <span class="channel-category">${ch.category} • ${ch.quality || 'HD'}</span>
+          <h3 class="channel-name" title="${escapeHtml(ch.name)}">${escapeHtml(ch.name)}</h3>
+          <span class="channel-category">${escapeHtml(ch.category)} • ${escapeHtml(ch.quality || 'HD')}</span>
         </div>
         <div class="epg-info">
-          <div class="epg-now">▶ ${nowTitle}</div>
+          <div class="epg-now">▶ ${escapeHtml(nowTitle)}</div>
           <div class="epg-progress-bar"><div class="epg-progress-fill" style="width: ${progress}%;"></div></div>
         </div>
       </div>
     `;
   }).join("");
+
+  grid.querySelectorAll("[data-channel-index]").forEach(card => {
+    const openChannel = () => {
+      const channel = paged[Number(card.dataset.channelIndex)];
+      if (channel) window.openVideoPlayer({
+        title: channel.name, epg: channel.epg?.now?.title || "Live Stream",
+        logo: channel.logo, streamUrl: channel.streamUrl, directUrl: channel.directUrl || "",
+        channelId: channel.id, stream_id: channel.stream_id || ""
+      });
+    };
+    card.addEventListener("click", event => {
+      if (!event.target.closest("[data-favorite-index]")) openChannel();
+    });
+    card.addEventListener("keydown", event => {
+      if ((event.key === "Enter" || event.key === " ") && !event.target.closest("[data-favorite-index]")) {
+        event.preventDefault();
+        openChannel();
+      }
+    });
+  });
+  grid.querySelectorAll("[data-favorite-index]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.stopPropagation();
+      const channel = paged[Number(button.dataset.favoriteIndex)];
+      if (channel) window.toggleFavorite(channel.id);
+    });
+  });
 
   if (filtered.length > paged.length) {
     const paginationHtml = `
