@@ -381,7 +381,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_series_categories()
         # 6. Series streams
         elif base_path == '/api/catalog/series':
-            cat_id = params.get('category_id')
+            cat_id = get_param('category_id')
             self.handle_series(cat_id)
         # 6b. Series info / episodes
         elif base_path == '/api/catalog/series-info':
@@ -536,17 +536,22 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_vod_streams(self, cat_id=None):
         server, user, pwd = self.get_xtream_creds()
-        if not cat_id:
-            # If no cat_id provided, default to first category or top movies
-            cat_id = '122' # ENGLISH | 4K
+        cache_key = str(cat_id) if cat_id else "__all__"
 
-        if cat_id in CACHE['vod_streams_by_cat']:
-            data = CACHE['vod_streams_by_cat'][cat_id]
+        if cache_key in CACHE['vod_streams_by_cat']:
+            data = CACHE['vod_streams_by_cat'][cache_key]
         else:
-            url = xtream_api_url(server, user, pwd, action='get_vod_streams', category_id=cat_id)
+            url = xtream_api_url(
+                server, user, pwd,
+                action='get_vod_streams',
+                category_id=cat_id
+            )
             try:
-                data = fetch_json(url, timeout=12)
-                CACHE['vod_streams_by_cat'][cat_id] = data
+                data = fetch_json(url, timeout=20)
+                if not isinstance(data, list):
+                    self.send_error(502, "The upstream VOD catalogue returned an invalid response.")
+                    return
+                CACHE['vod_streams_by_cat'][cache_key] = data
             except Exception as e:
                 self.send_upstream_error("fetching VOD streams", e)
                 return
@@ -584,16 +589,22 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_series(self, cat_id=None):
         server, user, pwd = self.get_xtream_creds()
-        if not cat_id:
-            cat_id = '518' # Highlights / top series
+        cache_key = str(cat_id) if cat_id else "__all__"
 
-        if cat_id in CACHE['series_by_cat']:
-            data = CACHE['series_by_cat'][cat_id]
+        if cache_key in CACHE['series_by_cat']:
+            data = CACHE['series_by_cat'][cache_key]
         else:
-            url = xtream_api_url(server, user, pwd, action='get_series', category_id=cat_id)
+            url = xtream_api_url(
+                server, user, pwd,
+                action='get_series',
+                category_id=cat_id
+            )
             try:
-                data = fetch_json(url, timeout=12)
-                CACHE['series_by_cat'][cat_id] = data
+                data = fetch_json(url, timeout=20)
+                if not isinstance(data, list):
+                    self.send_error(502, "The upstream series catalogue returned an invalid response.")
+                    return
+                CACHE['series_by_cat'][cache_key] = data
             except Exception as e:
                 self.send_upstream_error("fetching series", e)
                 return
@@ -630,16 +641,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(data)
                 return
         except Exception as e:
-            # Fallback sports categories
-            fallback = {
-                "ok": True,
-                "enabled": True,
-                "categories": ["Cricket", "Football", "SonyLiv", "Fancode", "Star Sports", "Willow"]
-            }
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(fallback).encode('utf-8'))
+            self.send_upstream_error("fetching sports channel categories", e)
 
     def handle_stream(self):
         m_hls = re.match(r'^/stream/hls/(\d+)/([a-zA-Z0-9_.-]+\.(m3u8|ts))', self.path)
