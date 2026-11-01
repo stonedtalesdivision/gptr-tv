@@ -1830,6 +1830,9 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLiveChannels();
   renderMovies();
   renderSeries();
+  renderMusicSection();
+  renderBiggBoss();
+  renderCricketSection();
   renderAccessCodes();
 
   // Access Code Button Listeners
@@ -2094,6 +2097,7 @@ window.removeAccessCode = function(code) {
     renderHomeView();
     renderMovies("All");
     renderSeries("All");
+    renderMusicSection();
   }
   renderAccessCodes();
 };
