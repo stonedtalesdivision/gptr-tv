@@ -1342,26 +1342,46 @@ function renderCricketSection() {
 function renderBiggBoss() {
   const bb = window.GPTR_DATA.bigboss;
   const grid = document.getElementById("multicamGrid");
-  if (!grid || !bb) return;
+  if (!grid || !bb || !Array.isArray(bb.feeds)) return;
 
-  grid.innerHTML = bb.feeds.map(feed => `
-    <div class="multicam-feed" onclick="window.openVideoPlayer({title:'Bigg Boss 24/7 - ${feed.name}', epg:'${bb.season} Live Feed', logo:'img/logo.png', streamUrl:'${feed.streamUrl}'})">
+  grid.innerHTML = bb.feeds.map((feed, index) => `
+    <div class="multicam-feed" data-bigg-boss-feed-index="${index}" role="button" tabindex="0">
       <div class="multicam-thumb-wrap">
-        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=70" alt="${feed.name}">
-        <div class="cam-badge">🔴 ${feed.camera}</div>
+        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=70" alt="${escapeHtml(feed.name)}">
+        <div class="cam-badge">🔴 ${escapeHtml(feed.camera)}</div>
         <div class="play-circle" style="position: absolute;">
           <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </div>
       </div>
       <div class="multicam-feed-info">
         <div>
-          <strong>${feed.name}</strong>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">${bb.season} • 24x7 Live Feed</div>
+          <strong>${escapeHtml(feed.name)}</strong>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(bb.season)} • 24x7 Live Feed</div>
         </div>
         <span class="badge badge-red">LIVE</span>
       </div>
     </div>
   `).join("");
+
+  grid.querySelectorAll("[data-bigg-boss-feed-index]").forEach(item => {
+    const openFeed = () => {
+      const feed = bb.feeds[Number(item.dataset.biggBossFeedIndex)];
+      if (!feed || typeof feed.streamUrl !== "string" || !feed.streamUrl.trim()) return;
+      window.openVideoPlayer({
+        title: `Bigg Boss 24/7 - ${feed.name}`,
+        epg: `${bb.season} Live Feed`,
+        logo: "img/logo.png",
+        streamUrl: feed.streamUrl
+      });
+    };
+    item.addEventListener("click", openFeed);
+    item.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openFeed();
+      }
+    });
+  });
 }
 
 function renderMusicSection() {
