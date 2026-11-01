@@ -1430,13 +1430,29 @@ function playTrack(track) {
 function renderLyrics() {
   const s = window.GPTR_APP.state;
   const scroll = document.getElementById("lyricsScroll");
-  if (!scroll || !s.currentTrack?.lyrics) return;
+  if (!scroll || !Array.isArray(s.currentTrack?.lyrics)) return;
 
-  scroll.innerHTML = s.currentTrack.lyrics.map((l, i) => `
-    <div class="lyrics-line ${i === s.currentLyricIndex ? 'active' : ''}" onclick="window.GPTR_APP.state.audioElement.currentTime=${l.time}">
-      ${l.text}
+  scroll.innerHTML = s.currentTrack.lyrics.map((line, index) => `
+    <div class="lyrics-line ${index === s.currentLyricIndex ? 'active' : ''}" data-lyric-index="${index}" role="button" tabindex="0">
+      ${escapeHtml(line.text)}
     </div>
   `).join("");
+
+  scroll.querySelectorAll("[data-lyric-index]").forEach(item => {
+    const seekToLyric = () => {
+      const line = s.currentTrack?.lyrics?.[Number(item.dataset.lyricIndex)];
+      const time = Number(line?.time);
+      if (!Number.isFinite(time) || time < 0 || !s.audioElement) return;
+      s.audioElement.currentTime = time;
+    };
+    item.addEventListener("click", seekToLyric);
+    item.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        seekToLyric();
+      }
+    });
+  });
 }
 
 function renderChannelDrawer() {
