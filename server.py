@@ -375,14 +375,18 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         # 4. VOD streams
         elif base_path == '/api/catalog/vod-streams':
             cat_id = get_param('category_id')
-            self.handle_vod_streams(cat_id)
+            limit = get_param('limit')
+            offset = get_param('offset', '0')
+            self.handle_vod_streams(cat_id, limit, offset)
         # 5. Series categories
         elif base_path == '/api/catalog/series-categories':
             self.handle_series_categories()
         # 6. Series streams
         elif base_path == '/api/catalog/series':
             cat_id = get_param('category_id')
-            self.handle_series(cat_id)
+            limit = get_param('limit')
+            offset = get_param('offset', '0')
+            self.handle_series(cat_id, limit, offset)
         # 6b. Series info / episodes
         elif base_path == '/api/catalog/series-info':
             series_id = get_param('series_id')
@@ -534,7 +538,19 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
-    def handle_vod_streams(self, cat_id=None):
+    def _paginate_catalog(self, data, limit=None, offset='0'):
+        """Apply bounded response pagination to an already cached provider catalogue."""
+        if limit in (None, ''):
+            return data
+        try:
+            page_size = max(1, min(int(limit), 100))
+            start = max(0, int(offset or 0))
+        except (TypeError, ValueError):
+            self.send_error(400, "Invalid catalogue pagination parameters.")
+            return []
+        return data[start:start + page_size]
+
+    def handle_vod_streams(self, cat_id=None, limit=None, offset='0'):
         server, user, pwd = self.get_xtream_creds()
         cache_key = str(cat_id) if cat_id else "__all__"
 
@@ -555,6 +571,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_upstream_error("fetching VOD streams", e)
                 return
 
+        data = self._paginate_catalog(data, limit, offset)
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -586,7 +603,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
-    def handle_series(self, cat_id=None):
+    def handle_series(self, cat_id=None, limit=None, offset='0'):
         server, user, pwd = self.get_xtream_creds()
         cache_key = str(cat_id) if cat_id else "__all__"
 
@@ -607,6 +624,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_upstream_error("fetching series", e)
                 return
 
+        data = self._paginate_catalog(data, limit, offset)
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
