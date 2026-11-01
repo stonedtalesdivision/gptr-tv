@@ -45,7 +45,7 @@ window.GPTR_APP = {
   }
 };
 
-// Immediate safety binding to ensure all 14,740 unlocked channels & VOD are linked
+// Use provider-supplied catalogues when available.
 if (typeof window !== "undefined") {
   if (window.GPTR_UNLOCKED_CHANNELS && window.GPTR_UNLOCKED_CHANNELS.length > 0) {
     window.GPTR_APP.state.channels = window.GPTR_UNLOCKED_CHANNELS;
