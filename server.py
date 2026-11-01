@@ -27,6 +27,23 @@ import time
 HLS_SESSIONS = {}
 HLS_LOCK = threading.Lock()
 
+def read_hls_file(filepath, attempts=8, delay=0.1):
+    """Retry briefly when FFmpeg is replacing or publishing an HLS file."""
+    last_error = None
+    for attempt in range(attempts):
+        try:
+            with open(filepath, 'rb') as stream:
+                content = stream.read()
+            if content:
+                return content
+            last_error = OSError("Generated HLS file is empty")
+        except OSError as exc:
+            last_error = exc
+        if attempt + 1 < attempts:
+            time.sleep(delay)
+    raise last_error or OSError("Unable to read generated HLS file")
+
+
 def cleanup_hls_sessions():
     while True:
         time.sleep(10)
@@ -618,6 +635,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                     '-f', 'hls',
                     '-hls_time', '2',
                     '-hls_list_size', '8',
+                    '-hls_delete_threshold', '10',
                     '-hls_flags', 'delete_segments+split_by_time',
                     playlist_path
                 ]
@@ -653,8 +671,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(504, "Timed out waiting for FFmpeg to generate the HLS playlist")
                 return
             try:
-                with open(filepath, 'rb') as f:
-                    content = f.read()
+                content = read_hls_file(filepath, attempts=5, delay=0.1)
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/vnd.apple.mpegurl')
                 self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -663,7 +680,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(content)
                 return
             except OSError:
-                self.send_error(500, "Unable to read the generated HLS playlist")
+                self.send_error(503, "HLS playlist is temporarily being updated; retry shortly")
                 return
         else:
             if not os.path.exists(filepath):
@@ -678,8 +695,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404, "HLS segment is not available yet")
                 return
             try:
-                with open(filepath, 'rb') as f:
-                    content = f.read()
+                content = read_hls_file(filepath, attempts=8, delay=0.1)
                 self.send_response(200)
                 self.send_header('Content-Type', 'video/mp2t')
                 self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -689,7 +705,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(content)
                 return
             except OSError:
-                self.send_error(500, "Unable to read the generated HLS segment")
+                self.send_error(404, "HLS segment expired or is not available; retry with the latest playlist")
                 return
 
     def proxy_live_stream(self, target_url):
