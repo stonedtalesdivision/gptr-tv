@@ -252,10 +252,25 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
     def handle_validate_code(self):
         try:
             content_len = int(self.headers.get('Content-Length', 0))
+            if content_len <= 0 or content_len > 8192:
+                self.send_response(413 if content_len > 8192 else 400)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Connection', 'close')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': 'Request body must be between 1 and 8192 bytes.'}).encode('utf-8'))
+                self.close_connection = True
+                return
+
             body = self.rfile.read(content_len)
+            if len(body) != content_len:
+                raise ValueError("Incomplete request body")
             data = json.loads(body.decode('utf-8'))
-            code = data.get('code', '').strip().upper()
-        except Exception as e:
+            if not isinstance(data, dict) or not isinstance(data.get('code'), str):
+                raise ValueError("Access code must be a string")
+            code = data['code'].strip().upper()
+            if not code or len(code) > 256:
+                raise ValueError("Access code length is invalid")
+        except Exception:
             self.send_response(400)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
