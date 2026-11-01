@@ -86,19 +86,18 @@ function renderMediaCards(container, items, type) {
   container.innerHTML = items.map((item, index) => {
     const title = escapeHtml(item.title);
     const poster = escapeHtml(safeMediaImageUrl(item.poster));
-    const rating = escapeHtml(item.rating ?? "N/A");
+    const rating = item.rating && item.rating !== "N/A"
+      ? `<div class="media-rating">★ ${escapeHtml(item.rating)}</div>`
+      : "";
     const subtitle = isSeries
       ? (item.seasonsCount ? `${escapeHtml(item.seasonsCount)} Seasons` : "TV Series")
-      : escapeHtml(item.year ?? "");
-    const genre = escapeHtml(item.genre ?? "");
-    const ratingMarkup = item.rating && item.rating !== "N/A"
-      ? `${ratingMarkup}`
-      : "";
+      : escapeHtml(item.year || "");
+    const genre = escapeHtml(item.genre || "");
     return `
       <div class="media-card" data-media-index="${index}" tabindex="0" role="button" aria-label="Open ${title}">
         <div class="media-poster-wrap">
           <img class="media-poster" src="${poster}" alt="${title}" loading="lazy" onerror="this.onerror=null;this.src='img/logo.png'">
-          <div class="media-rating">★ ${rating}</div>
+          ${rating}
           <div class="media-overlay">
             <div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
           </div>
