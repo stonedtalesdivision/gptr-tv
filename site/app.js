@@ -1777,7 +1777,7 @@ window.closeAccessCodeModal = function() {
   document.getElementById("accessCodeModal")?.classList.remove("active");
 };
 
-window.loadUnlockedCatalog = async function(session, code) {
+window.loadUnlockedCatalog = async function(session, code, allowAuthRefresh = true) {
   const s = window.GPTR_APP.state;
   s.isLoadingCatalog = true;
 
@@ -1789,6 +1789,31 @@ window.loadUnlockedCatalog = async function(session, code) {
     const catMap = {};
     try {
       const catRes = await fetch("/api/catalog/live-categories");
+      if (catRes.status === 401 && allowAuthRefresh && code) {
+        // A process restart invalidates the in-memory signing key. Revalidate the
+        // saved code once to issue a fresh session cookie, then retry the catalog.
+        const authRes = await fetch("/api/iptv/validate-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code })
+        });
+        if (authRes.ok) {
+          const authData = await authRes.json();
+          if (authData.success) {
+            const { xtreamUsername, xtreamPassword, ...safeSession } = authData;
+            s.activeCode = code;
+            s.session = safeSession;
+            localStorage.setItem("gptrtv_active_code", code);
+            localStorage.setItem("gptrtv_session", JSON.stringify(safeSession));
+            return await window.loadUnlockedCatalog(safeSession, code, false);
+          }
+        }
+        s.activeCode = null;
+        s.session = null;
+        localStorage.removeItem("gptrtv_active_code");
+        localStorage.removeItem("gptrtv_session");
+        throw new Error("Your session expired. Please enter your access code again.");
+      }
       if (catRes.ok) {
         const cats = await catRes.json();
         s.liveCategories = cats;
