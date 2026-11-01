@@ -1425,14 +1425,38 @@ function renderChannelDrawer() {
   if (!drawer) return;
 
   drawer.innerHTML = s.channels.map((ch, idx) => `
-    <div class="drawer-item ${idx === s.currentChannelIndex ? 'active' : ''}" onclick="window.GPTR_APP.state.currentChannelIndex=${idx}; window.openVideoPlayer({title:'${ch.name}', epg:'${ch.category}', logo:'${ch.logo}', streamUrl:'${ch.streamUrl}', channelId:'${ch.id}'})">
-      <img class="drawer-thumb" src="${ch.logo}" alt="${ch.name}" onerror="this.src='img/logo.png'">
+    <div class="drawer-item ${idx === s.currentChannelIndex ? 'active' : ''}" data-drawer-channel-index="${idx}" tabindex="0" role="button">
+      <img class="drawer-thumb" src="${escapeHtml(safeMediaImageUrl(ch.logo))}" alt="${escapeHtml(ch.name)}" onerror="this.onerror=null;this.src='img/logo.png'">
       <div>
-        <div style="font-weight: 700; font-size: 0.9rem;">${ch.name}</div>
-        <div style="font-size: 0.75rem; color: var(--text-muted);">${ch.category}</div>
+        <div style="font-weight: 700; font-size: 0.9rem;">${escapeHtml(ch.name)}</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(ch.category)}</div>
       </div>
     </div>
   `).join("");
+
+  drawer.querySelectorAll("[data-drawer-channel-index]").forEach(item => {
+    const openChannel = () => {
+      const index = Number(item.dataset.drawerChannelIndex);
+      const channel = s.channels[index];
+      if (!channel) return;
+      s.currentChannelIndex = index;
+      window.openVideoPlayer({
+        title: channel.name,
+        epg: channel.category,
+        logo: safeMediaImageUrl(channel.logo),
+        streamUrl: channel.streamUrl,
+        channelId: channel.id,
+        stream_id: channel.stream_id || ""
+      });
+    };
+    item.addEventListener("click", openChannel);
+    item.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openChannel();
+      }
+    });
+  });
 }
 
 let osdTimeout = null;
