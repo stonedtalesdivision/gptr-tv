@@ -14,7 +14,7 @@
   <div class="app-container">
 
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="appSidebar" aria-label="Main navigation">
       <div class="brand-section">
         <img class="brand-logo" src="img/logo.png" alt="GPTR TV Logo">
         <span class="brand-title">GPTR TV</span>
@@ -76,7 +76,7 @@
       <!-- Top Header -->
       <header class="top-header">
         <div class="header-left">
-          <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+          <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu" aria-controls="appSidebar" aria-expanded="false">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
           </button>
 
