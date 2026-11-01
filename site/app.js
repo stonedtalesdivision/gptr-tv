@@ -1972,13 +1972,8 @@ window.loadUnlockedCatalog = async function(session, code, allowAuthRefresh = tr
     renderSeries();
     renderHomeView();
 
-    // Load one real category from each catalogue to make the first screen useful.
-    const firstMovieCategory = s.vodCategories.find(category => category?.category_id != null);
-    const firstSeriesCategory = s.seriesCategories.find(category => category?.category_id != null);
-    await Promise.all([
-      firstMovieCategory ? window.selectMovieCategory(firstMovieCategory.category_name) : Promise.resolve(),
-      firstSeriesCategory ? window.selectSeriesCategory(firstSeriesCategory.category_name) : Promise.resolve()
-    ]);
+    // Movie and series streams are fetched only when the user selects a category.
+    // This keeps login lightweight and avoids downloading large catalogues unnecessarily.
   } catch (error) {
     console.error("[CATALOG] Load failed:", error);
     if (error.message === "Your session expired. Please enter your access code again.") {
