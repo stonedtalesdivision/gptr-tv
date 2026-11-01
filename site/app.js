@@ -1446,6 +1446,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Touch and pointer interaction reliably reveals the player controls.
+  const playerContainer = document.querySelector(".video-container");
+  const revealPlayerControls = () => showOSD();
+  playerContainer?.addEventListener("pointermove", revealPlayerControls, { passive: true });
+  playerContainer?.addEventListener("pointerdown", revealPlayerControls, { passive: true });
+  playerContainer?.addEventListener("touchstart", revealPlayerControls, { passive: true });
+  video?.addEventListener("play", revealPlayerControls);
+  video?.addEventListener("pause", revealPlayerControls);
+
   // Video Player OSD buttons
   const video = document.getElementById("mainVideoPlayer");
   const playBtn = document.getElementById("osdPlayBtn");
