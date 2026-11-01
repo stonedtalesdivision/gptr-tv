@@ -541,11 +541,10 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         if cache_key in CACHE['vod_streams_by_cat']:
             data = CACHE['vod_streams_by_cat'][cache_key]
         else:
-            url = xtream_api_url(
-                server, user, pwd,
-                action='get_vod_streams',
-                category_id=cat_id
-            )
+            params = {'action': 'get_vod_streams'}
+            if cat_id:
+                params['category_id'] = cat_id
+            url = xtream_api_url(server, user, pwd, **params)
             try:
                 data = fetch_json(url, timeout=20)
                 if not isinstance(data, list):
@@ -594,11 +593,10 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         if cache_key in CACHE['series_by_cat']:
             data = CACHE['series_by_cat'][cache_key]
         else:
-            url = xtream_api_url(
-                server, user, pwd,
-                action='get_series',
-                category_id=cat_id
-            )
+            params = {'action': 'get_series'}
+            if cat_id:
+                params['category_id'] = cat_id
+            url = xtream_api_url(server, user, pwd, **params)
             try:
                 data = fetch_json(url, timeout=20)
                 if not isinstance(data, list):
