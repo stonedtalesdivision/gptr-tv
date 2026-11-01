@@ -88,9 +88,12 @@ function renderMediaCards(container, items, type) {
     const poster = escapeHtml(safeMediaImageUrl(item.poster));
     const rating = escapeHtml(item.rating ?? "N/A");
     const subtitle = isSeries
-      ? `${escapeHtml(item.seasonsCount || 1)} Seasons`
+      ? (item.seasonsCount ? `${escapeHtml(item.seasonsCount)} Seasons` : "TV Series")
       : escapeHtml(item.year ?? "");
     const genre = escapeHtml(item.genre ?? "");
+    const ratingMarkup = item.rating && item.rating !== "N/A"
+      ? `${ratingMarkup}`
+      : "";
     return `
       <div class="media-card" data-media-index="${index}" tabindex="0" role="button" aria-label="Open ${title}">
         <div class="media-poster-wrap">
@@ -1051,12 +1054,8 @@ function renderMovies(filterGenre = "All") {
 
   if (filtered.length === 0) {
     grid.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
-        <h3>No movies loaded yet for "${filterGenre}"</h3>
-        <p style="margin-top: 8px;">Click "Fetch Movies" or select another category from the 172 available genres above.</p>
-        <button class="btn-primary" style="margin-top: 16px; padding: 8px 20px; border-radius: var(--radius-full);" onclick="window.selectMovieCategory('${escapeQuotes(filterGenre)}')">
-          🔄 Fetch ${filterGenre} Movies
-        </button>
+      <div class="empty-state">
+        ${s.vodCategories?.length ? "No movies are loaded in this category yet. Select a category to fetch its catalogue." : "Movie categories are unavailable. Check your provider connection and try again."}
       </div>
     `;
     return;
@@ -1172,12 +1171,8 @@ function renderSeries(filterGenre = "All") {
 
   if (filtered.length === 0) {
     grid.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
-        <h3>No TV series loaded yet for "${filterGenre}"</h3>
-        <p style="margin-top: 8px;">Click "Fetch Series" or select another category from the 301 available categories above.</p>
-        <button class="btn-primary" style="margin-top: 16px; padding: 8px 20px; border-radius: var(--radius-full);" onclick="window.selectSeriesCategory('${escapeQuotes(filterGenre)}')">
-          🔄 Fetch ${filterGenre} Series
-        </button>
+      <div class="empty-state">
+        ${s.seriesCategories?.length ? "No series are loaded in this category yet. Select a category to fetch its catalogue." : "Series categories are unavailable. Check your provider connection and try again."}
       </div>
     `;
     return;
@@ -1245,81 +1240,50 @@ window.selectSeriesCategory = async function(cat) {
 };
 
 function renderCricketSection() {
-  const data = window.GPTR_DATA.cricket;
   const container = document.getElementById("cricketCardContainer");
   if (!container) return;
-  if (!data || !data.match) {
-    container.innerHTML = '<p class="empty-state">Live sports data is currently unavailable.</p>';
+  const channels = window.GPTR_APP.state.channels || [];
+  const sportsChannels = channels.filter(channel =>
+    /sport|cricket|football|soccer|tennis|motorsport|racing|golf|basketball|rugby|hockey|fight|wrestling/i
+      .test(`${channel.category || ""} ${channel.name || ""}`)
+  );
+
+  if (sportsChannels.length === 0) {
+    container.innerHTML = '<p class="empty-state">No sports channels were found in your connected provider catalogue.</p>';
     return;
   }
 
   container.innerHTML = `
-    <div class="cricket-card-wrap">
-      <div class="cricket-header">
-        <div>
-          <span class="badge badge-red" style="margin-right: 8px;">LIVE CRICKET</span>
-          <strong>${data.match.title}</strong>
-        </div>
-        <span class="cricket-series">${data.match.venue}</span>
-      </div>
-
-      <div class="cricket-teams-row">
-        <div class="team-box">
-          <div class="team-name">India (Batting)</div>
-          <div class="team-score">${data.match.indiaScore}</div>
-          <div style="font-size: 0.85rem; color: #10B981; margin-top: 4px;">${data.match.lead} (${data.match.runRate})</div>
-        </div>
-        <div class="team-box">
-          <div class="team-name">Australia</div>
-          <div class="team-score">${data.match.australiaScore}</div>
-          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">1st Innings: Trail by 64 runs</div>
-        </div>
-      </div>
-
-      <div class="cricket-stats-grid">
-        <div class="batsmen-table">
-          <div style="font-weight: 700; margin-bottom: 8px; font-size: 0.9rem;">Current Batsmen</div>
-          ${data.match.batsmen.map(b => `
-            <div class="table-row">
-              <span><strong>${b.name}</strong> ${b.onStrike ? '*' : ''}</span>
-              <span><strong>${b.runs}</strong> (${b.balls}) • ${b.fours}x4 ${b.sixes}x6 • SR: ${b.sr}</span>
-            </div>
-          `).join("")}
-          <div class="balls-ticker">
-            <span style="font-size: 0.8rem; color: var(--text-muted);">This Over:</span>
-            ${data.match.recentBalls.map(ball => {
-              let cls = "";
-              if (ball === "4") cls = "ball-four";
-              if (ball === "6") cls = "ball-six";
-              if (ball === "W") cls = "ball-wicket";
-              return `<div class="ball-circle ${cls}">${ball}</div>`;
-            }).join("")}
+    <div class="media-grid">
+      ${sportsChannels.map((channel, index) => `
+        <button type="button" class="channel-card" data-sports-channel-index="${index}" style="text-align:left;border:0;color:inherit;">
+          <div class="channel-card-top">
+            <div class="channel-logo-wrap"><img class="channel-logo" src="${escapeHtml(safeMediaImageUrl(channel.logo))}" alt="${escapeHtml(channel.name)}" loading="lazy"></div>
+            <span class="badge badge-red">LIVE CHANNEL</span>
           </div>
-        </div>
-
-        <div class="bowler-box">
-          <div style="font-weight: 700; margin-bottom: 8px; font-size: 0.9rem;">Current Bowler</div>
-          <div style="font-size: 1.05rem; font-weight: 800;">${data.match.bowler.name}</div>
-          <div style="margin-top: 6px; font-size: 0.88rem; color: var(--text-secondary);">
-            ${data.match.bowler.overs} ov • ${data.match.bowler.maidens} M • ${data.match.bowler.runs} R • ${data.match.bowler.wickets} W
+          <div class="channel-info">
+            <h3 class="channel-name">${escapeHtml(channel.name)}</h3>
+            <span class="channel-category">${escapeHtml(channel.category || "Sports")}</span>
           </div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Econ: ${data.match.bowler.economy}</div>
-        </div>
-      </div>
-
-      <div style="margin-top: 24px;">
-        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 10px;">Live Ball-by-Ball Commentary</h4>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${data.match.commentary.map(comm => `
-            <div style="background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.88rem;">
-              <strong style="color: var(--brand-red); margin-right: 8px;">${comm.over}</strong>
-              <span>${comm.text}</span>
-            </div>
-          `).join("")}
-        </div>
-      </div>
+        </button>
+      `).join("")}
     </div>
   `;
+
+  container.querySelectorAll("[data-sports-channel-index]").forEach(card => {
+    card.addEventListener("click", () => {
+      const channel = sportsChannels[Number(card.dataset.sportsChannelIndex)];
+      if (!channel) return;
+      window.openVideoPlayer({
+        title: channel.name,
+        epg: channel.category || "Sports",
+        logo: safeMediaImageUrl(channel.logo),
+        streamUrl: channel.streamUrl,
+        channelId: channel.id,
+        stream_id: channel.stream_id || ""
+      });
+    });
+  });
 }
 
 function renderBiggBoss() {
