@@ -1499,10 +1499,39 @@ document.addEventListener("DOMContentLoaded", () => {
     aspectBtn.textContent = `Ratio: ${mode.toUpperCase()}`;
   });
 
-  pipBtn?.addEventListener("click", () => {
-    if (document.pictureInPictureElement) document.exitPictureInPicture();
-    else if (video.requestPictureInPicture) video.requestPictureInPicture();
-  });
+  // Support standard Picture-in-Picture and Safari's native video presentation mode.
+  const togglePlayerPiP = async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        if (typeof document.exitPictureInPicture === "function") {
+          await document.exitPictureInPicture();
+        }
+        return;
+      }
+
+      if (video.webkitPresentationMode && typeof video.webkitSetPresentationMode === "function") {
+        const nextMode = video.webkitPresentationMode === "picture-in-picture" ? "inline" : "picture-in-picture";
+        video.webkitSetPresentationMode(nextMode);
+        return;
+      }
+
+      if (video.disablePictureInPicture) {
+        console.info("[Player] Picture-in-Picture is disabled for this video.");
+        return;
+      }
+
+      if (document.pictureInPictureEnabled && typeof video.requestPictureInPicture === "function") {
+        await video.requestPictureInPicture();
+        return;
+      }
+
+      console.info("[Player] Picture-in-Picture is not supported by this browser.");
+    } catch (error) {
+      console.warn("[Player] Picture-in-Picture request failed:", error);
+    }
+  };
+
+  pipBtn?.addEventListener("click", togglePlayerPiP);
 
   // Use the standard Fullscreen API where available, with Safari/iOS video fallback.
   const togglePlayerFullscreen = async () => {
