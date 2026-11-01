@@ -297,7 +297,7 @@
               <input type="text" class="form-input" id="accessCodeInput" placeholder="e.g. GPTR-XXXX, VIP-XXXX, or IPTV Code" style="text-transform: uppercase; font-family: monospace; font-size: 1.05rem; letter-spacing: 1px;">
             </div>
 
-            <button class="btn-primary" id="btnActivateCode" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); border: none; margin-bottom: 14px;">
+            <button type="button" class="btn-primary" id="btnActivateCode" onclick="window.activateAccessCode(document.getElementById('accessCodeInput')?.value, 'codeStatusMsg')" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); border: none; margin-bottom: 14px;">
               ⚡ Activate Access Code
             </button>
 
@@ -551,7 +551,7 @@
         <label class="form-label" for="modalAccessCodeInput">Access Code</label>
         <input type="text" class="form-input" id="modalAccessCodeInput" placeholder="e.g. GPTR-XXXX, VIP-XXXX, or IPTV Code" style="text-transform: uppercase; font-family: monospace; font-size: 1.1rem; letter-spacing: 1.5px;">
       </div>
-      <button class="btn-primary" id="btnModalActivateCode" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); border: none; margin-bottom: 12px;">
+      <button type="button" class="btn-primary" id="btnModalActivateCode" onclick="window.activateAccessCode(document.getElementById('modalAccessCodeInput')?.value, 'modalCodeStatusMsg')" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); border: none; margin-bottom: 12px;">
         ⚡ Activate & Unlock
       </button>
       <div id="modalCodeStatusMsg" style="font-size: 0.88rem; min-height: 24px; font-weight: 600;"></div>
