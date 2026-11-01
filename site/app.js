@@ -1037,7 +1037,7 @@ function renderMovies(filterGenre = "All") {
 
   const totalDisplay = document.getElementById("movieTotalDisplay");
   if (totalDisplay) {
-    const totalCount = s.vodCategories ? s.vodCategories.length : 172;
+    const totalCount = s.vodCategories ? s.vodCategories.length : 0;
     totalDisplay.textContent = `${totalCount} Movie Categories • ${s.movies.length} Movies Loaded`;
   }
 
@@ -1178,7 +1178,7 @@ function renderSeries(filterGenre = "All") {
 
   const totalDisplay = document.getElementById("seriesTotalDisplay");
   if (totalDisplay) {
-    const totalCount = s.seriesCategories ? s.seriesCategories.length : 301;
+    const totalCount = s.seriesCategories ? s.seriesCategories.length : 0;
     totalDisplay.textContent = `${totalCount} TV Series Categories • ${s.series.length} Shows Loaded`;
   }
 
@@ -1268,7 +1268,11 @@ window.selectSeriesCategory = async function(cat) {
 function renderCricketSection() {
   const data = window.GPTR_DATA.cricket;
   const container = document.getElementById("cricketCardContainer");
-  if (!container || !data) return;
+  if (!container) return;
+  if (!data || !data.match) {
+    container.innerHTML = '<p class="empty-state">Live sports data is currently unavailable.</p>';
+    return;
+  }
 
   container.innerHTML = `
     <div class="cricket-card-wrap">
@@ -1342,7 +1346,11 @@ function renderCricketSection() {
 function renderBiggBoss() {
   const bb = window.GPTR_DATA.bigboss;
   const grid = document.getElementById("multicamGrid");
-  if (!grid || !bb || !Array.isArray(bb.feeds)) return;
+  if (!grid) return;
+  if (!bb || !Array.isArray(bb.feeds) || bb.feeds.length === 0) {
+    grid.innerHTML = '<p class="empty-state">No verified Bigg Boss feeds are currently available.</p>';
+    return;
+  }
 
   grid.innerHTML = bb.feeds.map((feed, index) => `
     <div class="multicam-feed" data-bigg-boss-feed-index="${index}" role="button" tabindex="0">
@@ -1385,9 +1393,15 @@ function renderBiggBoss() {
 }
 
 function renderMusicSection() {
-  const songs = window.GPTR_DATA.music.trending;
+  const songs = Array.isArray(window.GPTR_DATA.music?.trending) ? window.GPTR_DATA.music.trending : [];
   const list = document.getElementById("songList");
   if (!list) return;
+  if (songs.length === 0) {
+    list.innerHTML = '<p class="empty-state">No verified music streams are currently available.</p>';
+    const lyrics = document.getElementById("lyricsScroll");
+    if (lyrics) lyrics.textContent = "Lyrics will appear when a verified track is available.";
+    return;
+  }
 
   list.innerHTML = songs.map((s, i) => `
     <div class="song-item ${s.id === window.GPTR_APP.state.currentTrack?.id ? 'active' : ''}" onclick="playTrack(window.GPTR_DATA.music.trending[${i}])">
