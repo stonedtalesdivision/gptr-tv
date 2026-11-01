@@ -1349,11 +1349,36 @@ function renderMusicSection() {
   const list = document.getElementById("songList");
   if (!list) return;
   if (songs.length === 0) {
-    list.innerHTML = '<p class="empty-state">No verified music streams are currently available.</p>';
+    list.innerHTML = '<p class="empty-state">No verified music streams are configured. Connect a licensed music provider to enable playback.</p>';
     const lyrics = document.getElementById("lyricsScroll");
     if (lyrics) lyrics.textContent = "Lyrics will appear when a verified track is available.";
+    const state = window.GPTR_APP.state;
+    state.currentTrack = null;
+    state.isPlayingMusic = false;
+    state.audioElement.pause();
+    state.audioElement.removeAttribute("src");
+    state.audioElement.load();
+    ["musicPlayBtn", "musicPrevBtn", "musicNextBtn", "musicProgress"].forEach(id => {
+      const control = document.getElementById(id);
+      if (control) control.disabled = true;
+    });
+    const title = document.getElementById("musicTitle");
+    const artist = document.getElementById("musicArtist");
+    const thumb = document.getElementById("musicThumb");
+    const current = document.getElementById("musicTimeCurrent");
+    const total = document.getElementById("musicTimeTotal");
+    if (title) title.textContent = "No track selected";
+    if (artist) artist.textContent = "Music provider not connected";
+    if (thumb) thumb.src = "img/logo.png";
+    if (current) current.textContent = "0:00";
+    if (total) total.textContent = "0:00";
     return;
   }
+
+  ["musicPlayBtn", "musicPrevBtn", "musicNextBtn", "musicProgress"].forEach(id => {
+    const control = document.getElementById(id);
+    if (control) control.disabled = false;
+  });
 
   list.innerHTML = songs.map((s, i) => `
     <div class="song-item ${s.id === window.GPTR_APP.state.currentTrack?.id ? 'active' : ''}" onclick="playTrack(window.GPTR_DATA.music.trending[${i}])">
