@@ -737,15 +737,19 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 cmd = [
                     ffmpeg_path, '-y', '-hide_banner', '-loglevel', 'error',
                     '-user_agent', USER_AGENT,
-                    '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '5',
+                    '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_at_eof', '1',
+                    '-reconnect_delay_max', '5', '-rw_timeout', '15000000',
                     '-i', upstream_url,
+                    # Preserve the provider's codecs to avoid expensive server-side transcoding.
                     '-c:v', 'copy',
                     '-c:a', 'copy',
                     '-f', 'hls',
-                    '-hls_time', '2',
-                    '-hls_list_size', '8',
-                    '-hls_delete_threshold', '10',
-                    '-hls_flags', 'delete_segments+split_by_time',
+                    # Four-second segments give mobile clients a larger, more reliable fetch window.
+                    '-hls_time', '4',
+                    '-hls_list_size', '10',
+                    '-hls_delete_threshold', '12',
+                    # Publish completed segments atomically; clients never read a half-written .ts file.
+                    '-hls_flags', 'delete_segments+temp_file',
                     playlist_path
                 ]
                 try:
