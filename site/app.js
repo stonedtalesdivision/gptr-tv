@@ -1068,83 +1068,63 @@ function renderMovies(filterGenre = "All") {
 window.selectMovieCategory = async function(cat) {
   const s = window.GPTR_APP.state;
   s.activeMovieGenre = cat;
-
   if (cat === "All") {
     renderMovies("All");
     return;
   }
 
-  const catObj = (s.vodCategories || []).find(c => c.category_name === cat);
-  if (catObj && catObj.category_id) {
-    const catId = catObj.category_id;
-    const existing = s.movies.filter(m => String(m.categoryId) === String(catId) || m.genre === cat);
-    if (existing.length === 0) {
-      const grid = document.getElementById("movieGrid");
-      if (grid) {
-        grid.innerHTML = `
-          <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
-            <div class="player-spinner" style="margin: 0 auto 16px auto;"></div>
-            <p style="color: var(--text-primary); font-weight: 600;">Loading movies for ${cat}...</p>
-          </div>
-        `;
-      }
-      try {
-        const res = await fetch(`/api/catalog/vod-streams?category_id=${catId}`);
-        if (res.ok) {
-          const items = await res.json();
-          if (Array.isArray(items) && items.length > 0) {
-            const formatted = items.map(m => ({
-              id: "vod_" + m.stream_id,
-              stream_id: m.stream_id,
-              title: m.name,
-              genre: cat,
-              categoryId: String(catId),
-              year: (m.name.match(/\((\d{4})\)/) || [])[1] || "2024",
-              rating: m.rating || "8.5",
-              poster: (m.stream_icon && m.stream_icon.startsWith("http")) ? m.stream_icon : "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500",
-              backdrop: (m.stream_icon && m.stream_icon.startsWith("http")) ? m.stream_icon : "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200",
-              streamUrl: `/stream/movie/${m.stream_id}.${m.container_extension || "mp4"}`,
-              description: `${m.name} - Ultra High Definition streaming.`,
-              quality: m.name.includes("4K") ? "4K" : "1080p",
-              duration: "135m"
-            }));
-            const existingIds = new Set(s.movies.map(m => m.id));
-            formatted.forEach(item => {
-              if (!existingIds.has(item.id)) {
-                s.movies.push(item);
-                existingIds.add(item.id);
-              }
-            });
-          }
+  const category = (s.vodCategories || []).find(item => item.category_name === cat);
+  if (!category || category.category_id == null) {
+    renderMovies(cat);
+    return;
+  }
+
+  if (!(s.loadedMovieCategories instanceof Set)) s.loadedMovieCategories = new Set();
+  const categoryId = String(category.category_id);
+  if (!s.loadedMovieCategories.has(categoryId)) {
+    const grid = document.getElementById("movieGrid");
+    if (grid) grid.innerHTML = '<p class="empty-state">Loading movies from your provider…</p>';
+    try {
+      const response = await fetch(`/api/catalog/vod-streams?category_id=${encodeURIComponent(categoryId)}`, { credentials: "same-origin" });
+      if (!response.ok) throw new Error(`Movie request failed (${response.status}).`);
+      const items = await response.json();
+      if (!Array.isArray(items)) throw new Error("Invalid movie catalogue response.");
+      const formatted = items.filter(item => item && item.stream_id != null).map(item => {
+        const extension = /^[a-z0-9]{2,5}$/i.test(String(item.container_extension || "")) ? item.container_extension : "mp4";
+        const poster = safeMediaImageUrl(item.stream_icon);
+        return {
+          id: "vod_" + item.stream_id,
+          stream_id: item.stream_id,
+          title: item.name || "Untitled movie",
+          genre: category.category_name,
+          categoryId,
+          year: (String(item.name || "").match(/\((\d{4})\)/) || [])[1] || "",
+          rating: item.rating || "N/A",
+          poster,
+          backdrop: poster,
+          streamUrl: `/stream/movie/${encodeURIComponent(item.stream_id)}.${extension}`,
+          synopsis: item.plot || item.description || "",
+          description: item.plot || item.description || "",
+          quality: /4K/i.test(item.name || "") ? "4K" : (/FHD/i.test(item.name || "") ? "FHD" : ""),
+          duration: item.duration || (Number(item.duration_secs) > 0 ? formatTime(Number(item.duration_secs)) : "")
+        };
+      });
+      const existingIds = new Set(s.movies.map(item => item.id));
+      formatted.forEach(item => {
+        if (!existingIds.has(item.id)) {
+          s.movies.push(item);
+          existingIds.add(item.id);
         }
-      } catch (e) {
-        console.warn("Error fetching movies for category", catId, e);
-      }
+      });
+      s.loadedMovieCategories.add(categoryId);
+    } catch (error) {
+      console.warn("[CATALOG] Movie category unavailable:", error);
+      if (grid) grid.innerHTML = '<p class="empty-state">Movies could not be loaded from the provider. Please try again later.</p>';
+      return;
     }
   }
 
   renderMovies(cat);
-};
-
-window.renderSeriesCategoryChipsList = function(categories, activeCat, queryFilter = "") {
-  const chips = document.getElementById("seriesCategoryChips");
-  if (!chips) return;
-  const s = window.GPTR_APP.state;
-
-  let displayCats = categories;
-  if (queryFilter && queryFilter.trim()) {
-    const q = queryFilter.toLowerCase().trim();
-    displayCats = categories.filter(c => c === "All" || c === activeCat || c.toLowerCase().includes(q));
-  }
-
-  chips.innerHTML = displayCats.map(cat => {
-    const count = cat === "All" ? s.series.length : s.series.filter(ser => ser.genre === cat).length;
-    return `
-      <button class="chip ${cat === activeCat ? 'active' : ''}" onclick="window.selectSeriesCategory('${escapeQuotes(cat)}')">
-        ${cat} <span class="chip-count">${count > 0 ? count : ''}</span>
-      </button>
-    `;
-  }).join("");
 };
 
 window.filterSeriesCategoryChips = function(query) {
@@ -1209,56 +1189,55 @@ function renderSeries(filterGenre = "All") {
 window.selectSeriesCategory = async function(cat) {
   const s = window.GPTR_APP.state;
   s.activeSeriesGenre = cat;
-
   if (cat === "All") {
     renderSeries("All");
     return;
   }
 
-  const catObj = (s.seriesCategories || []).find(c => c.category_name === cat);
-  if (catObj && catObj.category_id) {
-    const catId = catObj.category_id;
-    const existing = s.series.filter(ser => String(ser.categoryId) === String(catId) || ser.genre === cat);
-    if (existing.length === 0) {
-      const grid = document.getElementById("seriesGrid");
-      if (grid) {
-        grid.innerHTML = `
-          <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
-            <div class="player-spinner" style="margin: 0 auto 16px auto;"></div>
-            <p style="color: var(--text-primary); font-weight: 600;">Loading TV series for ${cat}...</p>
-          </div>
-        `;
-      }
-      try {
-        const res = await fetch(`/api/catalog/series?category_id=${catId}`);
-        if (res.ok) {
-          const items = await res.json();
-          if (Array.isArray(items) && items.length > 0) {
-            const formatted = items.map(ser => ({
-              id: "ser_" + ser.series_id,
-              series_id: ser.series_id,
-              title: ser.name,
-              genre: cat,
-              categoryId: String(catId),
-              seasonsCount: 1,
-              rating: ser.rating || "8.0",
-              poster: (ser.cover && ser.cover.startsWith("http")) ? ser.cover : "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=500",
-              backdrop: (ser.cover && ser.cover.startsWith("http")) ? ser.cover : "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200",
-              description: `${ser.name} - Complete Series & Episodes.`,
-              quality: "HD"
-            }));
-            const existingIds = new Set(s.series.map(ser => ser.id));
-            formatted.forEach(item => {
-              if (!existingIds.has(item.id)) {
-                s.series.push(item);
-                existingIds.add(item.id);
-              }
-            });
-          }
+  const category = (s.seriesCategories || []).find(item => item.category_name === cat);
+  if (!category || category.category_id == null) {
+    renderSeries(cat);
+    return;
+  }
+
+  if (!(s.loadedSeriesCategories instanceof Set)) s.loadedSeriesCategories = new Set();
+  const categoryId = String(category.category_id);
+  if (!s.loadedSeriesCategories.has(categoryId)) {
+    const grid = document.getElementById("seriesGrid");
+    if (grid) grid.innerHTML = '<p class="empty-state">Loading series from your provider…</p>';
+    try {
+      const response = await fetch(`/api/catalog/series?category_id=${encodeURIComponent(categoryId)}`, { credentials: "same-origin" });
+      if (!response.ok) throw new Error(`Series request failed (${response.status}).`);
+      const items = await response.json();
+      if (!Array.isArray(items)) throw new Error("Invalid series catalogue response.");
+      const formatted = items.filter(item => item && item.series_id != null).map(item => {
+        const poster = safeMediaImageUrl(item.cover);
+        return {
+          id: "ser_" + item.series_id,
+          series_id: item.series_id,
+          title: item.name || "Untitled series",
+          genre: category.category_name,
+          categoryId,
+          seasonsCount: item.seasons_count || item.seasonsCount || null,
+          rating: item.rating || "N/A",
+          poster,
+          backdrop: poster,
+          synopsis: item.plot || item.description || "",
+          description: item.plot || item.description || ""
+        };
+      });
+      const existingIds = new Set(s.series.map(item => item.id));
+      formatted.forEach(item => {
+        if (!existingIds.has(item.id)) {
+          s.series.push(item);
+          existingIds.add(item.id);
         }
-      } catch (e) {
-        console.warn("Error fetching series for category", catId, e);
-      }
+      });
+      s.loadedSeriesCategories.add(categoryId);
+    } catch (error) {
+      console.warn("[CATALOG] Series category unavailable:", error);
+      if (grid) grid.innerHTML = '<p class="empty-state">Series could not be loaded from the provider. Please try again later.</p>';
+      return;
     }
   }
 
