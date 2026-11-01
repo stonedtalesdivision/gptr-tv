@@ -4,7 +4,6 @@
   "description": "Stream Live TV Channels, Movies, TV Series, Live Cricket & Music with Synced Lyrics.",
   "start_url": "./index.html",
   "display": "fullscreen",
-  "orientation": "landscape",
   "background_color": "#08090C",
   "theme_color": "#E50914",
   "icons": [
