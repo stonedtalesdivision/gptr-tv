@@ -429,16 +429,22 @@ window.openVideoPlayer = function(item, engine = null) {
     const hls = new window.Hls({
       enableWorker: true,
       lowLatencyMode: false,
-      backBufferLength: 60,
-      maxBufferLength: 30,
-      maxMaxBufferLength: 60,
-      maxBufferHole: 0.5,
-      liveSyncDurationCount: 3,
-      liveMaxLatencyDurationCount: 8,
-      manifestLoadingTimeOut: 25000,
-      manifestLoadingMaxRetry: 6,
-      fragLoadingTimeOut: 25000,
-      fragLoadingMaxRetry: 6
+      backBufferLength: 30,
+      maxBufferLength: 45,
+      maxMaxBufferLength: 90,
+      maxBufferHole: 1,
+      liveSyncDurationCount: 4,
+      liveMaxLatencyDurationCount: 12,
+      startFragPrefetch: true,
+      capLevelToPlayerSize: true,
+      manifestLoadingTimeOut: 20000,
+      manifestLoadingMaxRetry: 8,
+      manifestLoadingRetryDelay: 1000,
+      manifestLoadingMaxRetryTimeout: 12000,
+      fragLoadingTimeOut: 20000,
+      fragLoadingMaxRetry: 10,
+      fragLoadingRetryDelay: 1000,
+      fragLoadingMaxRetryTimeout: 15000
     });
     s.hls = hls;
     hls.loadSource(hlsUrl);
