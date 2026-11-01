@@ -1135,6 +1135,31 @@ window.selectMovieCategory = async function(cat) {
   renderMovies(cat);
 };
 
+window.renderSeriesCategoryChipsList = function(categories, activeCat, queryFilter = "") {
+  const chips = document.getElementById("seriesCategoryChips");
+  if (!chips) return;
+  const s = window.GPTR_APP.state;
+
+  let displayCats = categories;
+  if (queryFilter && queryFilter.trim()) {
+    const q = queryFilter.toLowerCase().trim();
+    displayCats = categories.filter(category =>
+      category === "All" || category === activeCat || String(category).toLowerCase().includes(q)
+    );
+  }
+
+  chips.innerHTML = displayCats.map(category => {
+    const count = category === "All"
+      ? s.series.length
+      : s.series.filter(item => item.genre === category).length;
+    return `
+      <button class="chip ${category === activeCat ? 'active' : ''}" onclick="window.selectSeriesCategory('${escapeQuotes(category)}')">
+        ${escapeHtml(category)} <span class="chip-count">${count > 0 ? count : ''}</span>
+      </button>
+    `;
+  }).join("");
+};
+
 window.filterSeriesCategoryChips = function(query) {
   const s = window.GPTR_APP.state;
   const rawCats = (s.seriesCategories && s.seriesCategories.length > 0)
