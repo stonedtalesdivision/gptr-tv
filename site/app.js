@@ -1820,6 +1820,7 @@ window.loadUnlockedCatalog = async function(session, code, allowAuthRefresh = tr
         cats.forEach(c => { catMap[c.category_id] = c.category_name; });
       }
     } catch (e) {
+      if (e.message === "Your session expired. Please enter your access code again.") throw e;
       console.warn("Failed to fetch live categories:", e);
     }
 
