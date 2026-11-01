@@ -29,7 +29,7 @@
         </a>
         <a class="nav-item" data-tab="live" tabindex="0">
           <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
-          <span>Live TV (<span id="sidebarChannelCountBadge">14,740</span>)</span>
+          <span>Live TV (<span id="sidebarChannelCountBadge">0</span>)</span>
         </a>
         <a class="nav-item" data-tab="movies" tabindex="0">
           <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -90,7 +90,7 @@
 
         <div class="header-right">
           <button class="btn-primary" id="btnHeaderAccessCode" onclick="window.openAccessCodeModal()" style="padding: 6px 14px; font-size: 0.82rem; background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); border: none;">
-            ✓ RAGHU4571 (VIP)
+            Enter Access Code
           </button>
           <div class="clock-display" id="clockDisplay">12:00:00</div>
           <button class="header-btn" id="btnFullscreen" title="Toggle Fullscreen (F)">
@@ -102,10 +102,10 @@
       <!-- Top Quick Navigation Bar (Always visible on all screens) -->
       <nav class="top-nav-bar">
         <button class="top-tab-item active" data-tab="home">🏠 Home</button>
-        <button class="top-tab-item" data-tab="live" id="topTabLive">📺 Live TV (<span id="liveChannelCountBadge">14,740</span>)</button>
+        <button class="top-tab-item" data-tab="live" id="topTabLive">📺 Live TV (<span id="liveChannelCountBadge">0</span>)</button>
         <button class="top-tab-item" data-tab="movies">🎬 Movies (VOD)</button>
         <button class="top-tab-item" data-tab="series">📽️ TV Series</button>
-        <button class="top-tab-item" data-tab="sports">🏏 Cricket Live</button>
+        <button class="top-tab-item" data-tab="sports">🏅 Sports Channels</button>
         <button class="top-tab-item" data-tab="bigboss">👁️ Bigg Boss 24/7</button>
         <button class="top-tab-item" data-tab="music">🎵 Music & Lyrics</button>
         <button class="top-tab-item" data-tab="codes">🔑 Access Codes (<span id="codeStatusBadge" style="color:#10B981;">VIP Active</span>)</button>
@@ -135,7 +135,7 @@
         <!-- 1. Live TV Channels Row -->
         <div class="section-header">
           <h2 class="section-title"><span></span> Trending Live TV Channels</h2>
-          <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="window.switchTab('live')">View All 14,740+ Channels ▶</button>
+          <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="window.switchTab('live')">View All Channels ▶</button>
         </div>
         <div class="channel-grid" id="homeChannelPreview">
           <!-- Populated by JS -->
@@ -314,15 +314,6 @@
               <!-- Populated by JS -->
             </div>
 
-            <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 14px;">
-              <span style="font-size: 0.85rem; color: #F59E0B; font-weight: 700; display: block; margin-bottom: 8px;">⚡ Official Server Access Code:</span>
-              <button class="btn-primary" style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 800; padding: 10px 18px; border: none; font-size: 0.92rem; letter-spacing: 0.5px; width: 100%; justify-content: center; box-shadow: 0 0 14px rgba(245,158,11,0.4);" onclick="document.getElementById('accessCodeInput').value='RAGHU4571'; document.getElementById('btnActivateCode').click()">
-                ⚡ UNLOCK 14,740+ CHANNELS ("RAGHU4571")
-              </button>
-              <div style="margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
-                * Validates against server backend and connects to STAR-NETWORK (livebox.pro). Random codes will be rejected.
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -564,12 +555,6 @@
         ⚡ Activate & Unlock
       </button>
       <div id="modalCodeStatusMsg" style="font-size: 0.88rem; min-height: 24px; font-weight: 600;"></div>
-      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
-        <span style="font-size: 0.82rem; color: var(--text-muted);">Quick-fill Legitimate Server Code:</span>
-        <button class="chip" style="margin-left: 8px; color: #F59E0B; border-color: #F59E0B; font-weight: 800; background: rgba(245,158,11,0.15);" onclick="document.getElementById('modalAccessCodeInput').value='RAGHU4571'; document.getElementById('btnModalActivateCode').click()">
-          ⚡ RAGHU4571
-        </button>
-      </div>
     </div>
   </div>
 
@@ -577,7 +562,6 @@
   <script src="mpegts.js?v=14746"></script>
   <script src="hls.min.js"></script>
   <script src="unlocked_channels.js?v=14746"></script>
-  <script src="unlocked_vod.js?v=14746"></script>
   <script src="channels_data.js?v=14746"></script>
   <script src="app.js?v=20261030b"></script>
 </body>
