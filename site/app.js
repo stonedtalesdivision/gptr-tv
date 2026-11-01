@@ -696,33 +696,64 @@ function renderHomeView() {
   // 1. Home Live Channels Row (First 8 channels)
   const homeCh = document.getElementById("homeChannelPreview");
   if (homeCh && s.channels.length > 0) {
-    homeCh.innerHTML = s.channels.slice(0, 8).map(ch => {
+    const previewChannels = s.channels.slice(0, 8);
+    homeCh.innerHTML = previewChannels.map((ch, index) => {
       const isFav = s.favorites.includes(ch.id);
       const nowTitle = ch.epg?.now?.title || "Live Stream";
-      const progress = ch.epg?.now?.progress || 50;
+      const progress = Math.max(0, Math.min(100, Number(ch.epg?.now?.progress ?? 50) || 0));
 
       return `
-        <div class="channel-card" onclick="window.openVideoPlayer({title:'${ch.name}', epg:'${nowTitle}', logo:'${ch.logo}', streamUrl:'${ch.streamUrl}', channelId:'${ch.id}'})" tabindex="0">
+        <div class="channel-card" data-home-channel-index="${index}" tabindex="0" role="button">
           <div class="channel-card-top">
             <div class="channel-logo-wrap">
-              <img class="channel-logo" src="${ch.logo}" alt="${ch.name}" onerror="this.src='img/logo.png'">
+              <img class="channel-logo" src="${escapeHtml(safeMediaImageUrl(ch.logo))}" alt="${escapeHtml(ch.name)}" onerror="this.onerror=null;this.src='img/logo.png'">
             </div>
             <div class="channel-badges">
               <span class="badge badge-red">LIVE</span>
-              <button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); window.toggleFavorite('${ch.id}')">★</button>
+              <button type="button" class="fav-btn ${isFav ? 'active' : ''}" data-home-favorite-index="${index}" aria-label="Toggle favorite">★</button>
             </div>
           </div>
           <div class="channel-info">
-            <h3 class="channel-name">${ch.name}</h3>
-            <span class="channel-category">${ch.category} • ${ch.quality || 'HD'}</span>
+            <h3 class="channel-name">${escapeHtml(ch.name)}</h3>
+            <span class="channel-category">${escapeHtml(ch.category)} • ${escapeHtml(ch.quality || 'HD')}</span>
           </div>
           <div class="epg-info">
-            <div class="epg-now">▶ ${nowTitle}</div>
+            <div class="epg-now">▶ ${escapeHtml(nowTitle)}</div>
             <div class="epg-progress-bar"><div class="epg-progress-fill" style="width: ${progress}%;"></div></div>
           </div>
         </div>
       `;
     }).join("");
+
+    homeCh.querySelectorAll("[data-home-channel-index]").forEach(card => {
+      const openChannel = () => {
+        const channel = previewChannels[Number(card.dataset.homeChannelIndex)];
+        if (channel) window.openVideoPlayer({
+          title: channel.name,
+          epg: channel.epg?.now?.title || "Live Stream",
+          logo: safeMediaImageUrl(channel.logo),
+          streamUrl: channel.streamUrl,
+          channelId: channel.id,
+          stream_id: channel.stream_id || ""
+        });
+      };
+      card.addEventListener("click", event => {
+        if (!event.target.closest("[data-home-favorite-index]")) openChannel();
+      });
+      card.addEventListener("keydown", event => {
+        if ((event.key === "Enter" || event.key === " ") && !event.target.closest("[data-home-favorite-index]")) {
+          event.preventDefault();
+          openChannel();
+        }
+      });
+    });
+    homeCh.querySelectorAll("[data-home-favorite-index]").forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        const channel = previewChannels[Number(button.dataset.homeFavoriteIndex)];
+        if (channel) window.toggleFavorite(channel.id);
+      });
+    });
   }
 
   // 2. Home Movies Row (First 6 movies)
