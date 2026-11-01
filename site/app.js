@@ -1296,105 +1296,116 @@ function renderCricketSection() {
 }
 
 function renderBiggBoss() {
-  const bb = window.GPTR_DATA.bigboss;
   const grid = document.getElementById("multicamGrid");
   if (!grid) return;
-  if (!bb || !Array.isArray(bb.feeds) || bb.feeds.length === 0) {
-    grid.innerHTML = '<p class="empty-state">No verified Bigg Boss feeds are currently available.</p>';
+  const channels = window.GPTR_APP.state.channels || [];
+  const feeds = channels.filter(channel =>
+    /bigg[\s_-]*boss/i.test(`${channel.category || ""} ${channel.name || ""}`)
+  );
+
+  if (feeds.length === 0) {
+    grid.innerHTML = '<p class="empty-state">No Bigg Boss live channels are present in your connected provider catalogue.</p>';
     return;
   }
 
-  grid.innerHTML = bb.feeds.map((feed, index) => `
-    <div class="multicam-feed" data-bigg-boss-feed-index="${index}" role="button" tabindex="0">
+  grid.innerHTML = feeds.map((channel, index) => `
+    <button type="button" class="multicam-feed" data-bigg-boss-feed-index="${index}" style="text-align:left;border:0;color:inherit;">
       <div class="multicam-thumb-wrap">
-        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=70" alt="${escapeHtml(feed.name)}">
-        <div class="cam-badge">🔴 ${escapeHtml(feed.camera)}</div>
+        <img src="${escapeHtml(safeMediaImageUrl(channel.logo))}" alt="${escapeHtml(channel.name)}" loading="lazy">
+        <div class="cam-badge">LIVE CHANNEL</div>
         <div class="play-circle" style="position: absolute;">
           <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </div>
       </div>
       <div class="multicam-feed-info">
-        <div>
-          <strong>${escapeHtml(feed.name)}</strong>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(bb.season)} • 24x7 Live Feed</div>
-        </div>
+        <div><strong>${escapeHtml(channel.name)}</strong><div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(channel.category || "Bigg Boss")}</div></div>
         <span class="badge badge-red">LIVE</span>
       </div>
-    </div>
+    </button>
   `).join("");
 
-  grid.querySelectorAll("[data-bigg-boss-feed-index]").forEach(item => {
-    const openFeed = () => {
-      const feed = bb.feeds[Number(item.dataset.biggBossFeedIndex)];
-      if (!feed || typeof feed.streamUrl !== "string" || !feed.streamUrl.trim()) return;
+  grid.querySelectorAll("[data-bigg-boss-feed-index]").forEach(card => {
+    card.addEventListener("click", () => {
+      const channel = feeds[Number(card.dataset.biggBossFeedIndex)];
+      if (!channel) return;
       window.openVideoPlayer({
-        title: `Bigg Boss 24/7 - ${feed.name}`,
-        epg: `${bb.season} Live Feed`,
-        logo: "img/logo.png",
-        streamUrl: feed.streamUrl
+        title: channel.name,
+        epg: channel.category || "Bigg Boss",
+        logo: safeMediaImageUrl(channel.logo),
+        streamUrl: channel.streamUrl,
+        channelId: channel.id,
+        stream_id: channel.stream_id || ""
       });
-    };
-    item.addEventListener("click", openFeed);
-    item.addEventListener("keydown", event => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        openFeed();
-      }
     });
   });
 }
 
+
 function renderMusicSection() {
-  const songs = Array.isArray(window.GPTR_DATA.music?.trending) ? window.GPTR_DATA.music.trending : [];
   const list = document.getElementById("songList");
   if (!list) return;
-  if (songs.length === 0) {
-    list.innerHTML = '<p class="empty-state">No verified music streams are configured. Connect a licensed music provider to enable playback.</p>';
-    const lyrics = document.getElementById("lyricsScroll");
-    if (lyrics) lyrics.textContent = "Lyrics will appear when a verified track is available.";
-    const state = window.GPTR_APP.state;
-    state.currentTrack = null;
-    state.isPlayingMusic = false;
-    state.audioElement.pause();
-    state.audioElement.removeAttribute("src");
-    state.audioElement.load();
-    ["musicPlayBtn", "musicPrevBtn", "musicNextBtn", "musicProgress"].forEach(id => {
-      const control = document.getElementById(id);
-      if (control) control.disabled = true;
-    });
-    const title = document.getElementById("musicTitle");
-    const artist = document.getElementById("musicArtist");
-    const thumb = document.getElementById("musicThumb");
-    const current = document.getElementById("musicTimeCurrent");
-    const total = document.getElementById("musicTimeTotal");
-    if (title) title.textContent = "No track selected";
-    if (artist) artist.textContent = "Music provider not connected";
-    if (thumb) thumb.src = "img/logo.png";
-    if (current) current.textContent = "0:00";
-    if (total) total.textContent = "0:00";
+  const channels = window.GPTR_APP.state.channels || [];
+  const musicChannels = channels.filter(channel =>
+    /music|mtv|vh1|club|radio|beats/i.test(`${channel.category || ""} ${channel.name || ""}`)
+  );
+
+  const lyrics = document.getElementById("lyricsScroll");
+  if (lyrics) {
+    lyrics.textContent = "Synced lyrics require a separate licensed on-demand music provider.";
+  }
+
+  const state = window.GPTR_APP.state;
+  state.currentTrack = null;
+  state.isPlayingMusic = false;
+  state.audioElement.pause();
+  state.audioElement.removeAttribute("src");
+  state.audioElement.load();
+  ["musicPlayBtn", "musicPrevBtn", "musicNextBtn", "musicProgress"].forEach(id => {
+    const control = document.getElementById(id);
+    if (control) control.disabled = true;
+  });
+  const title = document.getElementById("musicTitle");
+  const artist = document.getElementById("musicArtist");
+  const thumb = document.getElementById("musicThumb");
+  const current = document.getElementById("musicTimeCurrent");
+  const total = document.getElementById("musicTimeTotal");
+  if (title) title.textContent = "Live music channels";
+  if (artist) artist.textContent = "From your connected TV provider";
+  if (thumb) thumb.src = "img/logo.png";
+  if (current) current.textContent = "0:00";
+  if (total) total.textContent = "0:00";
+
+  if (musicChannels.length === 0) {
+    list.innerHTML = '<p class="empty-state">No music channels were found in your connected provider catalogue.</p>';
     return;
   }
 
-  ["musicPlayBtn", "musicPrevBtn", "musicNextBtn", "musicProgress"].forEach(id => {
-    const control = document.getElementById(id);
-    if (control) control.disabled = false;
-  });
-
-  list.innerHTML = songs.map((s, i) => `
-    <div class="song-item ${s.id === window.GPTR_APP.state.currentTrack?.id ? 'active' : ''}" onclick="playTrack(window.GPTR_DATA.music.trending[${i}])">
+  list.innerHTML = musicChannels.map((channel, index) => `
+    <button type="button" class="song-item" data-music-channel-index="${index}" style="width:100%;text-align:left;border:0;color:inherit;">
       <div class="song-left">
-        <img class="song-cover" src="${s.cover}" alt="${s.title}">
-        <div>
-          <div class="song-title">${s.title}</div>
-          <div class="song-artist">${s.artist} • ${s.album}</div>
-        </div>
+        <img class="song-cover" src="${escapeHtml(safeMediaImageUrl(channel.logo))}" alt="${escapeHtml(channel.name)}" loading="lazy">
+        <div><div class="song-title">${escapeHtml(channel.name)}</div><div class="song-artist">${escapeHtml(channel.category || "Music")}</div></div>
       </div>
-      <div style="font-size: 0.85rem; color: var(--text-muted);">${s.duration}</div>
-    </div>
+      <span class="badge badge-red">LIVE</span>
+    </button>
   `).join("");
 
-  renderLyrics();
+  list.querySelectorAll("[data-music-channel-index]").forEach(button => {
+    button.addEventListener("click", () => {
+      const channel = musicChannels[Number(button.dataset.musicChannelIndex)];
+      if (!channel) return;
+      window.openVideoPlayer({
+        title: channel.name,
+        epg: channel.category || "Music",
+        logo: safeMediaImageUrl(channel.logo),
+        streamUrl: channel.streamUrl,
+        channelId: channel.id,
+        stream_id: channel.stream_id || ""
+      });
+    });
+  });
 }
+
 
 function playTrack(track) {
   const s = window.GPTR_APP.state;
