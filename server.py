@@ -374,7 +374,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_vod_categories()
         # 4. VOD streams
         elif base_path == '/api/catalog/vod-streams':
-            cat_id = params.get('category_id')
+            cat_id = get_param('category_id')
             self.handle_vod_streams(cat_id)
         # 5. Series categories
         elif base_path == '/api/catalog/series-categories':
