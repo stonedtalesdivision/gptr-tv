@@ -801,6 +801,9 @@ function updateDOMBadges() {
       btn.style.background = "linear-gradient(135deg, #10B981, #059669)";
       btn.style.boxShadow = "0 0 10px rgba(16, 185, 129, 0.4)";
     }
+  } else {
+    const btn = document.getElementById("btnHeaderAccessCode");
+    if (btn) btn.textContent = "Enter Access Code";
   }
 }
 
@@ -2053,13 +2056,19 @@ window.removeAccessCode = function(code) {
     s.session = null;
     localStorage.removeItem("gptrtv_active_code");
     localStorage.removeItem("gptrtv_session");
-    s.channels = [...(window.GPTR_DATA?.channels || [])];
-    s.movies = [...(window.GPTR_DATA?.movies || [])];
-    s.series = [...(window.GPTR_DATA?.series || [])];
+    s.channels = [];
+    s.movies = [];
+    s.series = [];
+    s.vodCategories = [];
+    s.seriesCategories = [];
+    s.loadedMovieCategories = new Set();
+    s.loadedSeriesCategories = new Set();
     renderLiveBanner();
     updateDOMBadges();
     renderLiveChannels("All");
     renderHomeView();
+    renderMovies("All");
+    renderSeries("All");
   }
   renderAccessCodes();
 };
