@@ -206,22 +206,27 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             f"{AUTH_COOKIE_NAME}={self._auth_token(code)}; Path=/; Max-Age={AUTH_SESSION_MAX_AGE}; HttpOnly; Secure; SameSite=Lax"
         )
 
-    def _is_authenticated(self):
+    def _authenticated_code(self):
         cookies = http.cookies.SimpleCookie()
         try:
             cookies.load(self.headers.get('Cookie', ''))
             morsel = cookies.get(AUTH_COOKIE_NAME)
             if morsel is None:
-                return False
+                return None
             code, separator, supplied_signature = morsel.value.partition('.')
             if not separator or code not in CACHE['codes']:
-                return False
+                return None
             expected_signature = hmac.new(
                 AUTH_SIGNING_KEY, code.encode('utf-8'), hashlib.sha256
             ).hexdigest()
-            return hmac.compare_digest(supplied_signature, expected_signature)
+            if hmac.compare_digest(supplied_signature, expected_signature):
+                return code
         except (ValueError, TypeError):
-            return False
+            pass
+        return None
+
+    def _is_authenticated(self):
+        return self._authenticated_code() is not None
 
     def _require_authentication(self):
         if self._is_authenticated():
@@ -383,7 +388,10 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_series_info(series_id)
         # 7. Sports channels
         elif base_path == '/api/iptv/sports/channels':
-            code = params.get('code', 'RAGHU4571')
+            code = self._authenticated_code()
+            if not code:
+                self._require_authentication()
+                return
             self.handle_sports_channels(code)
         # 8. User / account info
         elif base_path == '/api/account/info':
