@@ -484,7 +484,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             server, user, pwd = self.get_xtream_creds()
             url = xtream_api_url(server, user, pwd, action='get_live_streams')
             try:
-                print("[CATALOG] Fetching full 14,740 live streams from Livebox...")
+                print("[CATALOG] Fetching live streams from configured Xtream provider...")
                 data = fetch_json(url, timeout=25)
                 CACHE['live_streams'] = data
                 print(f"[CATALOG] Cached {len(data)} live channels successfully!")
