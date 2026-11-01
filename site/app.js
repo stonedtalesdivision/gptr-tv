@@ -1504,10 +1504,40 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (video.requestPictureInPicture) video.requestPictureInPicture();
   });
 
-  fsBtn?.addEventListener("click", () => {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
-  });
+  // Use the standard Fullscreen API where available, with Safari/iOS video fallback.
+  const togglePlayerFullscreen = async () => {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) {
+        try { await document.exitFullscreen(); }
+        catch (error) { console.warn("[Player] Could not exit fullscreen:", error); }
+      }
+      return;
+    }
+
+    // iPhone Safari exposes native fullscreen on the video element rather than the page.
+    if (typeof video.webkitEnterFullscreen === "function" && !document.fullscreenEnabled) {
+      try { video.webkitEnterFullscreen(); }
+      catch (error) { console.warn("[Player] Native video fullscreen unavailable:", error); }
+      return;
+    }
+
+    const fullscreenTarget = document.getElementById("videoPlayerModal") || video;
+    if (typeof fullscreenTarget.requestFullscreen === "function") {
+      try { await fullscreenTarget.requestFullscreen(); }
+      catch (error) {
+        console.warn("[Player] Fullscreen request was rejected:", error);
+        if (typeof video.webkitEnterFullscreen === "function") {
+          try { video.webkitEnterFullscreen(); }
+          catch (fallbackError) { console.warn("[Player] Native fullscreen fallback failed:", fallbackError); }
+        }
+      }
+    } else if (typeof video.webkitEnterFullscreen === "function") {
+      try { video.webkitEnterFullscreen(); }
+      catch (error) { console.warn("[Player] Native video fullscreen unavailable:", error); }
+    }
+  };
+
+  fsBtn?.addEventListener("click", togglePlayerFullscreen);
 
   closeBtn?.addEventListener("click", window.closeVideoPlayer);
   toggleDrawerBtn?.addEventListener("click", () => document.getElementById("channelDrawer")?.classList.toggle("open"));
@@ -1597,8 +1627,7 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
         case "f":
         case "F":
-          if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-          else document.exitFullscreen();
+          togglePlayerFullscreen();
           break;
         case "m":
         case "M":
