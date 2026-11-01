@@ -413,10 +413,25 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         url = xtream_api_url(server, user, pwd)
         try:
             data = fetch_json(url, timeout=6)
+
+            # Xtream account responses may echo the upstream login credentials.
+            # Remove credential fields recursively before returning account data.
+            def redact_credentials(value):
+                if isinstance(value, dict):
+                    return {
+                        key: redact_credentials(item)
+                        for key, item in value.items()
+                        if str(key).lower() not in ('username', 'user_name', 'password', 'passwd')
+                    }
+                if isinstance(value, list):
+                    return [redact_credentials(item) for item in value]
+                return value
+
+            safe_data = redact_credentials(data)
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(data).encode('utf-8'))
+            self.wfile.write(json.dumps(safe_data).encode('utf-8'))
         except Exception as e:
             self.send_upstream_error("fetching account information", e)
 
