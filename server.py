@@ -243,7 +243,8 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path.startswith('/api/iptv/validate-code') or self.path == '/api/validate-code':
+        route = urllib.parse.urlsplit(self.path).path
+        if route in ('/api/iptv/validate-code', '/api/validate-code'):
             self.handle_validate_code()
         else:
             self.send_error(404, "Not Found")
@@ -355,18 +356,18 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
     def handle_api(self):
-        # Extract query parameters
-        path_parts = self.path.split('?')
-        base_path = path_parts[0]
-        query = path_parts[1] if len(path_parts) > 1 else ''
-        params = dict(p.split('=', 1) for p in query.split('&') if '=' in p)
+        # Parse paths and query strings with standard URL decoding.
+        parsed_url = urllib.parse.urlsplit(self.path)
+        base_path = parsed_url.path
+        params = urllib.parse.parse_qs(parsed_url.query, keep_blank_values=True)
+        get_param = lambda name, default=None: params.get(name, [default])[0]
 
         # 1. Live categories
         if base_path == '/api/catalog/live-categories':
             self.handle_live_categories()
         # 2. Live streams (all or by category)
         elif base_path == '/api/catalog/live-streams':
-            cat_id = params.get('category_id')
+            cat_id = get_param('category_id')
             self.handle_live_streams(cat_id)
         # 3. VOD categories
         elif base_path == '/api/catalog/vod-categories':
@@ -384,7 +385,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_series(cat_id)
         # 6b. Series info / episodes
         elif base_path == '/api/catalog/series-info':
-            series_id = params.get('series_id')
+            series_id = get_param('series_id')
             self.handle_series_info(series_id)
         # 7. Sports channels
         elif base_path == '/api/iptv/sports/channels':
