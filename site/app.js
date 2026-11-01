@@ -20,9 +20,18 @@ window.GPTR_APP = {
     aspectRatioIndex: 0,
     aspectRatios: ["contain", "cover", "fill"],
     userPlaylists: JSON.parse(localStorage.getItem("gptrtv_playlists") || "[]"),
-    accessCodes: JSON.parse(localStorage.getItem("gptrtv_access_codes") || JSON.stringify([{code:"RAGHU4571",name:"Gandreti Raghu",provider:"STAR-NETWORK (livebox.pro)",activatedAt:new Date().toLocaleDateString(),expiresAt:"Active VIP Subscription",status:"ACTIVE",unlockedChannels:14740,server:"http://livebox.pro"}])),
-    activeCode: localStorage.getItem("gptrtv_active_code") || "RAGHU4571",
-    session: JSON.parse(localStorage.getItem("gptrtv_session") || JSON.stringify({success:true,name:"Gandreti Raghu",playlistType:"xtream",xtreamServer:"http://livebox.pro",xtreamUsername:"5403259",xtreamPassword:"precious6mark"})),
+    accessCodes: JSON.parse(localStorage.getItem("gptrtv_access_codes") || "[]"),
+    activeCode: localStorage.getItem("gptrtv_active_code") || "",
+    session: (() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("gptrtv_session") || "null");
+        if (!saved || typeof saved !== "object") return null;
+        const { xtreamUsername, xtreamPassword, ...safeSession } = saved;
+        return safeSession;
+      } catch {
+        return null;
+      }
+    })(),
     liveCategories: window.GPTR_CATEGORIES || [],
     liveCurrentPage: 1,
     livePageSize: 60,
@@ -1805,7 +1814,7 @@ window.loadUnlockedCatalog = async function(session, code) {
           categoryId: item.category_id,
           logo: (item.stream_icon && item.stream_icon.startsWith("http")) ? item.stream_icon : "img/logo.png",
           streamUrl: `/stream/live/${item.stream_id}.m3u8`,
-          directUrl: `http://livebox.pro/live/5403259/precious6mark/${item.stream_id}.ts`,
+          directUrl: `/stream/live/${item.stream_id}.m3u8`,
           quality: item.name.includes("4K") ? "4K" : (item.name.includes("FHD") ? "FHD" : "HD"),
           epg: {
             now: { title: item.name + " Live Broadcast", progress: 50 }
@@ -1919,7 +1928,7 @@ window.activateAccessCode = async function(inputVal, statusElId) {
     }
 
     const data = await res.json();
-    console.log("Validation success:", data);
+    console.log("Access code validated successfully.");
 
     if (!data.success) {
       if (statusEl) {
@@ -1930,10 +1939,11 @@ window.activateAccessCode = async function(inputVal, statusElId) {
     }
 
     const s = window.GPTR_APP.state;
+    const { xtreamUsername, xtreamPassword, ...safeSession } = data;
     s.activeCode = code;
-    s.session = data;
+    s.session = safeSession;
     localStorage.setItem("gptrtv_active_code", code);
-    localStorage.setItem("gptrtv_session", JSON.stringify(data));
+    localStorage.setItem("gptrtv_session", JSON.stringify(safeSession));
 
     const newCodeEntry = {
       code: code,
@@ -1943,7 +1953,7 @@ window.activateAccessCode = async function(inputVal, statusElId) {
       expiresAt: "Active VIP Subscription",
       status: "ACTIVE",
       unlockedChannels: 14740,
-      server: data.xtreamServer || "http://livebox.pro"
+      server: "Protected server connection"
     };
 
     s.accessCodes = [newCodeEntry, ...s.accessCodes.filter(c => c.code !== code)];
