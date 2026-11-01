@@ -185,7 +185,7 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps({'error': 'Invalid request format'}).encode('utf-8'))
             return
 
-        print(f"[AUTH] Validating code: {code}")
+        print("[AUTH] Validating access code")
 
         # Check local cache first
         if code in CACHE['codes']:
@@ -218,23 +218,34 @@ class GPTRTVHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(resp_data)
-                print(f"[AUTH SUCCESS] Code {code} validated for {parsed.get('name')}")
+                print("[AUTH SUCCESS] Access code validated")
                 return
         except urllib.error.HTTPError as e:
             err_body = e.read()
-            print(f"[AUTH FAILED] Code {code} -> HTTP {e.code}: {err_body.decode('utf-8', errors='ignore')}")
+            print(f"[AUTH FAILED] Validation service returned HTTP {e.code}")
             self.send_response(e.code)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
             self.wfile.write(err_body)
             return
-        except Exception as e:
-            print(f"[AUTH ERROR] Code {code} connection error: {e}")
-            # If duckdns connection failed, return 404 error
-            self.send_response(404)
+        except (TimeoutError, socket.timeout):
+            print("[AUTH ERROR] Validation service timed out")
+            self.send_response(504)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({'error': 'Invalid code. Please check and try again.'}).encode('utf-8'))
+            self.wfile.write(json.dumps({'error': 'Validation service timed out. Please try again.'}).encode('utf-8'))
+        except (urllib.error.URLError, OSError) as e:
+            print(f"[AUTH ERROR] Validation service unavailable: {type(e).__name__}")
+            self.send_response(502)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'error': 'Validation service is temporarily unavailable. Please try again.'}).encode('utf-8'))
+        except Exception as e:
+            print(f"[AUTH ERROR] Unexpected validation failure: {type(e).__name__}")
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'error': 'An unexpected validation error occurred.'}).encode('utf-8'))
 
     def do_GET(self):
         # Route API requests
