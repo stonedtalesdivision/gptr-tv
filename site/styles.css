@@ -2165,3 +2165,25 @@ body {
   .channel-grid, .media-grid { gap: 8px; }
   .channel-card { min-width: 0; }
 }
+
+
+/* Mobile navigation backdrop and page scroll lock */
+@media (max-width: 768px) {
+  body.mobile-menu-open {
+    overflow: hidden;
+    touch-action: none;
+  }
+  body.mobile-menu-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 4999;
+    background: rgba(0, 0, 0, 0.62);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    touch-action: none;
+  }
+  body.mobile-menu-open .sidebar {
+    z-index: 5000 !important;
+  }
+}
