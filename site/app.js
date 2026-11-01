@@ -774,7 +774,7 @@ function renderHomeView() {
 
 function updateDOMBadges() {
   const s = window.GPTR_APP.state;
-  const countStr = s.channels.length > 1000 ? s.channels.length.toLocaleString() : `${s.channels.length}+`;
+  const countStr = s.channels.length.toLocaleString();
   const badge1 = document.getElementById("liveChannelCountBadge");
   const badge2 = document.getElementById("sidebarChannelCountBadge");
   const codeBadge = document.getElementById("codeStatusBadge");
@@ -791,7 +791,7 @@ function updateDOMBadges() {
     }
     const btn = document.getElementById("btnHeaderAccessCode");
     if (btn) {
-      btn.innerHTML = `✓ ${s.activeCode} (VIP)`;
+      btn.textContent = "✓ Access Active";
       btn.style.background = "linear-gradient(135deg, #10B981, #059669)";
       btn.style.boxShadow = "0 0 10px rgba(16, 185, 129, 0.4)";
     }
@@ -807,7 +807,7 @@ function renderLiveBanner() {
     container.innerHTML = `
       <div class="unlocked-banner">
         <div class="unlocked-banner-text">
-          ✓ <strong>VIP Access Active (${s.activeCode}):</strong> ${s.channels.length.toLocaleString()} Live Channels & Full VOD Unlocked for ${s.session?.name || "Gandreti Raghu"}
+          ✓ <strong>Provider access active:</strong> ${s.channels.length.toLocaleString()} live channels loaded for ${escapeHtml(s.session?.name || "your account")}.
         </div>
         <button class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="window.switchTab('codes')">Manage Code</button>
       </div>
@@ -816,7 +816,7 @@ function renderLiveBanner() {
     container.innerHTML = `
       <div class="unlock-prompt-banner">
         <div class="unlock-prompt-text">
-          🔑 <strong>Access Code Required:</strong> Enter <code>RAGHU4571</code> to unlock 10,000+ live TV channels, movies & series catalogues from server.
+          🔑 <strong>Access Code Required:</strong> Connect your subscription to load live TV, movies and series from your provider.
         </div>
         <button class="btn-primary" style="padding: 6px 16px; font-size: 0.82rem; background: linear-gradient(135deg, #F59E0B, #D97706); border:none;" onclick="window.openAccessCodeModal()">
           Enter Access Code
@@ -1790,26 +1790,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initial Renders
-  // Immediately load all 172 VOD categories and 301 Series categories from static JSON
-  try {
-    fetch('/unlocked_vod_categories.json')
-      .then(r => r.json())
-      .then(cats => {
-        if (Array.isArray(cats)) {
-          window.GPTR_APP.state.vodCategories = cats;
-          if (window.GPTR_APP.state.currentTab === "movies") renderMovies();
-        }
-      }).catch(e => console.warn("Failed loading vod_categories.json", e));
-
-    fetch('/unlocked_series_categories.json')
-      .then(r => r.json())
-      .then(cats => {
-        if (Array.isArray(cats)) {
-          window.GPTR_APP.state.seriesCategories = cats;
-          if (window.GPTR_APP.state.currentTab === "series") renderSeries();
-        }
-      }).catch(e => console.warn("Failed loading series_categories.json", e));
-  } catch (e) {}
+  // Catalogue categories are loaded only after provider authentication.
 
   renderHomeView();
   renderLiveChannels();
@@ -2013,12 +1994,12 @@ window.activateAccessCode = async function(inputVal, statusElId) {
 
     const newCodeEntry = {
       code: code,
-      name: data.name || "Gandreti Raghu",
-      provider: "STAR-NETWORK (livebox.pro)",
+      name: data.name || "Subscriber",
+      provider: data.provider || "Connected provider",
       activatedAt: new Date().toLocaleDateString(),
-      expiresAt: "Active VIP Subscription",
+      expiresAt: data.exp_date || data.expiry || "Not supplied by provider",
       status: "ACTIVE",
-      unlockedChannels: 14740,
+      unlockedChannels: null,
       server: "Protected server connection"
     };
 
@@ -2027,7 +2008,7 @@ window.activateAccessCode = async function(inputVal, statusElId) {
 
     if (statusEl) {
       statusEl.style.color = "#10B981";
-      statusEl.textContent = `✓ Code verified! Welcome, ${data.name || code}. Unlocking 14,740+ channels...`;
+      statusEl.textContent = `✓ Code verified! Welcome, ${data.name || "subscriber"}. Loading your provider catalogue...`;
     }
 
     // Unlock full library
@@ -2079,7 +2060,7 @@ function renderAccessCodes() {
       <div style="text-align: center; padding: 24px 10px; color: var(--text-muted); background: rgba(0,0,0,0.2); border-radius: var(--radius-md);">
         <div style="font-size: 1.5rem; margin-bottom: 6px;">🔒</div>
         <strong>No codes activated yet</strong>
-        <div style="font-size: 0.8rem; margin-top: 4px;">Enter a legitimate code like <strong>RAGHU4571</strong> to unlock server content.</div>
+        <div style="font-size: 0.8rem; margin-top: 4px;">Enter your subscription access code to connect to the provider catalogue.</div>
       </div>
     `;
     return;
@@ -2093,7 +2074,7 @@ function renderAccessCodes() {
           <span class="badge-active">${c.status}</span>
         </div>
         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-          ${c.name ? `User: <strong>${c.name}</strong> • ` : ""}${c.provider} • <strong>${(c.unlockedChannels || 14740).toLocaleString()} Channels</strong>
+          ${c.name ? `User: <strong>${escapeHtml(c.name)}</strong> • ` : ""}${escapeHtml(c.provider || "Connected provider")} • <strong>${Number.isFinite(c.unlockedChannels) ? c.unlockedChannels.toLocaleString() + " Channels" : "Catalogue synced on connection"}</strong>
         </div>
       </div>
       <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.78rem; border-color: rgba(239, 68, 68, 0.4); color: #EF4444;" onclick="window.removeAccessCode('${c.code}')">
